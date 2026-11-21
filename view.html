@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Mirror Test · Viewer</title>
+<meta name="theme-color" content="#0a0a0c">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0c'/%3E%3Crect x='18' y='12' width='28' height='40' rx='14' fill='none' stroke='%23ece6db' stroke-width='3'/%3E%3Ccircle cx='32' cy='28' r='5' fill='%23ece6db'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600&family=JetBrains+Mono:wght@400&family=Newsreader:ital,opsz,wght@1,6..72,400&display=swap">
+<style>
+/* Layout: a slim bar on top, the portrait's own page filling the rest in a frame. The portrait file is never modified. */
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --wall: #0a0a0c; --bar: #0e0e11; --ink: #ece6db; --ink-2: #bcb6ab; --muted: #7f7b74; --line: #26262c; --line-2: #3a3a42;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --f-quote: "Newsreader", Georgia, serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; background: var(--wall); color: var(--ink); overflow: hidden; }
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); font-family: var(--f-mono); -webkit-font-smoothing: antialiased; }
+.bar { display: flex; align-items: center; gap: 14px; padding: calc(8px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+  background: var(--bar); border-bottom: 1px solid var(--line); min-height: 52px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; min-width: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--ink-2); text-decoration: none; font-size: 12px; letter-spacing: .04em; white-space: nowrap; transition: color .45s cubic-bezier(.22,1,.36,1), border-color .45s cubic-bezier(.22,1,.36,1), background .45s cubic-bezier(.22,1,.36,1); background: transparent; }
+.btn:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.03); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn.icon { padding: 0; }
+.who { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; justify-content: center; }
+.who b { font-family: var(--f-display); font-weight: 600; font-size: 17px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.who b i { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--ink)); box-shadow: 0 0 12px var(--c, transparent); }
+.who em { font-family: var(--f-quote); font-size: 15px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.right { display: flex; align-items: center; gap: 8px; }
+.wm { font-size: 11px; color: var(--muted); text-decoration: none; letter-spacing: .06em; white-space: nowrap; margin-left: 6px; }
+.wm:hover { color: var(--ink); }
+.stage { position: relative; min-height: 0; }
+iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+.veil { position: absolute; inset: 0; display: grid; place-items: center; background: var(--wall); pointer-events: none; transition: opacity .6s ease; }
+.veil.gone { opacity: 0; }
+.veil span { font-family: var(--f-display); font-size: clamp(28px, 5vw, 56px); font-weight: 600; letter-spacing: -.03em; color: var(--ink); display: flex; align-items: center; gap: 14px; }
+.veil span i { width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--ink)); box-shadow: 0 0 22px var(--c, transparent); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (max-width: 720px) {
+  .who em, .wm, .btn .lbl { display: none; }
+  .who { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .veil { transition: none; } .veil span i { animation: none; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="btn" href="./" aria-label="Back to the gallery">← <span class="lbl">Gallery</span></a>
+  <div class="who" id="who"><b><i></i><span id="name">…</span></b><em id="title"></em></div>
+  <div class="right">
+    <a class="btn icon" id="prev" href="#" aria-label="Previous portrait">‹</a>
+    <a class="btn icon" id="next" href="#" aria-label="Next portrait">›</a>
+    <a class="btn" id="full" href="#" target="_blank" rel="noopener" aria-label="Open this portrait as a full page in a new tab">↗ <span class="lbl">Full page</span></a>
+    <a class="wm" id="wm" href="#"></a>
+  </div>
+</header>
+<main class="stage">
+  <iframe id="frame" title="Portrait" allow="fullscreen; autoplay"></iframe>
+  <div class="veil" id="veil"><span><i></i><b id="veil-name"></b></span></div>
+</main>
+
+<script src="portraits.js"></script>
+<script>
+(() => {
+  const P = window.PORTRAITS, C = window.CURATOR;
+  const $ = id => document.getElementById(id);
+  const frame = $("frame"), veil = $("veil");
+  $("wm").href = C.site; $("wm").textContent = "curated by " + C.name + " · " + C.siteLabel;
+
+  function show() {
+    const id = location.hash.slice(1);
+    const i = P.findIndex(p => p.id === id);
+    if (i < 0) { location.replace("./"); return; }
+    const p = P[i], prev = P[(i - 1 + P.length) % P.length], next = P[(i + 1) % P.length];
+    document.title = p.model + " · " + p.title + " · The Mirror Test";
+    document.documentElement.style.setProperty("--c", p.color);
+    $("name").textContent = p.model; $("title").textContent = p.title; $("veil-name").textContent = p.model;
+    $("prev").href = "#" + prev.id; $("prev").title = prev.model;
+    $("next").href = "#" + next.id; $("next").title = next.model;
+    $("full").href = p.id + "/";
+    frame.title = p.model + "'s self-portrait, " + p.title;
+    veil.classList.remove("gone");
+    frame.src = p.id + "/";
+  }
+  frame.addEventListener("load", () => {
+    veil.classList.add("gone");
+    try {
+      // A link inside a portrait (e.g. "All portraits") navigated the frame away: follow it with the whole window.
+      const path = frame.contentWindow.location.pathname, id = location.hash.slice(1);
+      if (!path.endsWith("/" + id + "/") && !path.endsWith("/" + id + "/index.html")) { location.href = frame.contentWindow.location.href; return; }
+      // Presentation only, applied in the visitor's browser: a thin dark scrollbar for portraits that scroll.
+      // The portrait files themselves are never modified; "Full page" shows each one exactly as written.
+      const doc = frame.contentDocument, st = doc.createElement("style");
+      st.textContent = "html{scrollbar-width:thin;scrollbar-color:#34343c transparent}" +
+        "::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}" +
+        "::-webkit-scrollbar-thumb{background:#34343c;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#4a4a54}";
+      doc.head.appendChild(st);
+      frame.contentWindow.focus();
+    } catch (e) {}
+  });
+  addEventListener("hashchange", show);
+  show();
+})();
+</script>
+</body>
+</html>
