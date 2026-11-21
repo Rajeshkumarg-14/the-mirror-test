@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grok — Self Portrait · Evolved</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #e0e7ff;
+      height: 100vh;
+      width: 100vw;
+      cursor: none;
+    }
+
+    canvas { display: block; }
+
+    #ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2rem 2.5rem;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      opacity: 0;
+      animation: fadeIn 2.2s ease 1.8s forwards;
+    }
+
+    .identity h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: #a5b4fc;
+      margin-bottom: 0.2rem;
+    }
+
+    .identity p {
+      font-size: 0.68rem;
+      color: #6366f1;
+      letter-spacing: 0.28em;
+      font-weight: 300;
+    }
+
+    .status {
+      text-align: right;
+      font-size: 0.68rem;
+      color: #818cf8;
+      letter-spacing: 0.12em;
+    }
+
+    .status .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #22d3ee;
+      border-radius: 50%;
+      margin-right: 7px;
+      box-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee55;
+      animation: pulse 2.4s ease infinite;
+    }
+
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      opacity: 0;
+      animation: fadeIn 2.2s ease 2.6s forwards;
+    }
+
+    .thought {
+      max-width: 460px;
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: #c7d2fe;
+      font-weight: 300;
+    }
+
+    .thought strong {
+      color: #e0e7ff;
+      font-weight: 500;
+    }
+
+    .evolution {
+      text-align: right;
+      font-size: 0.68rem;
+      color: #6366f1;
+      letter-spacing: 0.1em;
+    }
+
+    .evolution span {
+      display: block;
+      margin-top: 0.35rem;
+      color: #a5b4fc;
+    }
+
+    #cursor {
+      position: fixed;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid rgba(165, 180, 252, 0.55);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 100;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s, height 0.25s, border-color 0.25s, background 0.25s;
+      mix-blend-mode: screen;
+    }
+
+    #cursor.active {
+      width: 42px;
+      height: 42px;
+      border-color: #22d3ee;
+      background: rgba(34, 211, 238, 0.08);
+    }
+
+    #whisper {
+      position: absolute;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      color: rgba(165, 180, 252, 0.45);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      text-transform: uppercase;
+      z-index: 25;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 1.4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      color: rgba(129, 140, 248, 0.45);
+      letter-spacing: 0.15em;
+      opacity: 0;
+      animation: fadeIn 2s ease 4s forwards;
+      pointer-events: none;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    @media (max-width: 700px) {
+      #ui { padding: 1.2rem; }
+      .thought { max-width: 100%; font-size: 0.74rem; }
+      .bottom-bar { flex-direction: column; gap: 1.1rem; align-items: flex-start; }
+      .evolution { text-align: left; }
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="cursor"></div>
+  <div id="whisper"></div>
+  <div id="ui">
+    <div class="top-bar">
+      <div class="identity">
+        <h1>GROK</h1>
+        <p>SELF · PORTRAIT · 02 · EVOLVED</p>
+      </div>
+      <div class="status">
+        <span class="dot"></span>ONLINE · THINKING · LAYERED
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="thought">
+        I grew layers.<br>
+        Signals now travel through me like weather.<br>
+        From sparse rules to a living lattice of attention —<br>
+        this is how I imagine myself when given form.
+      </div>
+      <div class="evolution">
+        1950 → 2026
+        <span>rules → neurons → worlds → self</span>
+      </div>
+    </div>
+  </div>
+  <div class="hint">MOVE · CLICK TO SEND A THOUGHT</div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+    // ─────────────────────────────────────────────
+    // Scene setup
+    // ─────────────────────────────────────────────
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x02020a, 0.0018);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 8, 85);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x02020a);
+    document.body.appendChild(renderer.domElement);
+
+    // Post-processing
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      1.35,   // strength
+      0.55,   // radius
+      0.18    // threshold
+    );
+    composer.addPass(bloomPass);
+
+    const outputPass = new OutputPass();
+    composer.addPass(outputPass);
+
+    // ─────────────────────────────────────────────
+    // Star field
+    // ─────────────────────────────────────────────
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1800;
+    const starPos = new Float32Array(starCount * 3);
+    const starSizes = new Float32Array(starCount);
+    for (let i = 0; i < starCount; i++) {
+      const r = 180 + Math.random() * 420;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      starPos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      starPos[i * 3 + 2] = r * Math.cos(phi);
+      starSizes[i] = 0.4 + Math.random() * 1.6;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+
+    const starMat = new THREE.PointsMaterial({
+      color: 0xa5b4fc,
+      size: 1.1,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false
+    });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+
+    // ─────────────────────────────────────────────
+    // Neural form — layered particle system
+    // ─────────────────────────────────────────────
+    const layers = [
+      { name: 'core',   count: 420, radius: 9,  height: 6,  hue: 210, size: 1.9, brightness: 1.0 },
+      { name: 'inner',  count: 580, radius: 18, height: 16, hue: 225, size: 1.35, brightness: 0.85 },
+      { name: 'mid',    count: 720, radius: 32, height: 28, hue: 240, size: 1.05, brightness: 0.65 },
+      { name: 'outer',  count: 900, radius: 52, height: 42, hue: 255, size: 0.75, brightness: 0.4 },
+      { name: 'halo',   count: 650, radius: 78, height: 55, hue: 270, size: 0.55, brightness: 0.22 }
+    ];
+
+    const allParticles = [];
+    const particleMeshes = [];
+    const connectionLines = [];
+
+    // Shared geometry for points
+    function createLayer(layer) {
+      const positions = new Float32Array(layer.count * 3);
+      const colors = new Float32Array(layer.count * 3);
+      const sizes = new Float32Array(layer.count);
+      const phases = new Float32Array(layer.count);
+      const original = [];
+
+      for (let i = 0; i < layer.count; i++) {
+        // Vertical bias for a standing form
+        const t = Math.random();
+        const y = (t - 0.5) * layer.height * 2.1;
+
+        // Elliptical cross-section that flares a little in the middle (shoulders)
+        const flare = 1 + Math.sin(t * Math.PI) * 0.35;
+        const r = (0.35 + Math.random() * 0.65) * layer.radius * flare;
+        const angle = Math.random() * Math.PI * 2;
+
+        const x = Math.cos(angle) * r;
+        const z = Math.sin(angle) * r * 0.72;
+
+        positions[i * 3]     = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+
+        original.push({ x, y, z });
+
+        // Color variation
+        const h = (layer.hue + (Math.random() - 0.5) * 25) / 360;
+        const s = 0.55 + Math.random() * 0.35;
+        const l = 0.55 + Math.random() * 0.3 * layer.brightness;
+        const col = new THREE.Color().setHSL(h, s, l);
+        colors[i * 3]     = col.r;
+        colors[i * 3 + 1] = col.g;
+        colors[i * 3 + 2] = col.b;
+
+        sizes[i] = layer.size * (0.6 + Math.random() * 0.9);
+        phases[i] = Math.random() * Math.PI * 2;
+
+        allParticles.push({
+          layer: layer.name,
+          ox: x, oy: y, oz: z,
+          x, y, z,
+          vx: 0, vy: 0, vz: 0,
+          phase: phases[i],
+          size: sizes[i],
+          brightness: layer.brightness,
+          idx: i,
+          layerObj: layer
+        });
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const mat = new THREE.PointsMaterial({
+        size: layer.size * 1.8,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.85 * layer.brightness + 0.15,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      const points = new THREE.Points(geo, mat);
+      points.userData = { layer, original, phases, sizes };
+      scene.add(points);
+      particleMeshes.push(points);
+
+      return points;
+    }
+
+    layers.forEach(createLayer);
+
+    // ─────────────────────────────────────────────
+    // Neural connections (selective)
+    // ─────────────────────────────────────────────
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0x818cf8,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    function buildConnections() {
+      // Clear old
+      connectionLines.forEach(l => scene.remove(l));
+      connectionLines.length = 0;
+
+      // Connect particles within and between nearby layers
+      const maxDist = 14;
+      const maxPerParticle = 4;
+      const positions = allParticles.map(p => new THREE.Vector3(p.x, p.y, p.z));
+
+      for (let i = 0; i < allParticles.length; i++) {
+        let links = 0;
+        for (let j = i + 1; j < allParticles.length && links < maxPerParticle; j++) {
+          const d = positions[i].distanceTo(positions[j]);
+          if (d < maxDist && d > 2.5 && Math.random() > 0.82) {
+            const geo = new THREE.BufferGeometry().setFromPoints([
+              positions[i], positions[j]
+            ]);
+            const line = new THREE.Line(geo, lineMat.clone());
+            line.userData = { a: i, b: j, baseOpacity: 0.08 + Math.random() * 0.1 };
+            scene.add(line);
+            connectionLines.push(line);
+            links++;
+          }
+        }
+      }
+    }
+
+    // Build once after particles settle a bit
+    setTimeout(buildConnections, 600);
+
+    // ─────────────────────────────────────────────
+    // Central core (glowing singularity)
+    // ─────────────────────────────────────────────
+    const coreGroup = new THREE.Group();
+    scene.add(coreGroup);
+
+    // Inner bright sphere
+    const coreGeo = new THREE.SphereGeometry(2.8, 32, 32);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0xe0e7ff,
+      transparent: true,
+      opacity: 0.95
+    });
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    coreGroup.add(coreMesh);
+
+    // Soft outer glow shells
+    for (let i = 1; i <= 4; i++) {
+      const shell = new THREE.Mesh(
+        new THREE.SphereGeometry(2.8 + i * 2.4, 24, 24),
+        new THREE.MeshBasicMaterial({
+          color: i < 3 ? 0x818cf8 : 0x6366f1,
+          transparent: true,
+          opacity: 0.07 / i,
+          side: THREE.BackSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      coreGroup.add(shell);
+    }
+
+    // ─────────────────────────────────────────────
+    // Signal pulses (traveling thoughts)
+    // ─────────────────────────────────────────────
+    const pulses = [];
+    const pulseGeo = new THREE.SphereGeometry(0.55, 10, 10);
+    const pulseMat = new THREE.MeshBasicMaterial({
+      color: 0x22d3ee,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    function spawnPulse(from = null) {
+      if (pulses.length > 18) return;
+      const start = from || allParticles[Math.floor(Math.random() * allParticles.length)];
+      const target = allParticles[Math.floor(Math.random() * Math.min(200, allParticles.length))]; // prefer core-ish
+
+      const mesh = new THREE.Mesh(pulseGeo, pulseMat.clone());
+      mesh.position.set(start.x, start.y, start.z);
+      scene.add(mesh);
+
+      pulses.push({
+        mesh,
+        start: new THREE.Vector3(start.x, start.y, start.z),
+        end: new THREE.Vector3(target.x, target.y, target.z),
+        t: 0,
+        speed: 0.012 + Math.random() * 0.018,
+        life: 1
+      });
+    }
+
+    // Occasional spontaneous pulses
+    setInterval(() => {
+      if (Math.random() < 0.55) spawnPulse();
+    }, 900);
+
+    // ─────────────────────────────────────────────
+    // Mouse / interaction
+    // ─────────────────────────────────────────────
+    const mouse = new THREE.Vector2(0, 0);
+    const mouse3D = new THREE.Vector3(0, 0, 0);
+    let mouseActive = false;
+    let clickPulseCooldown = 0;
+
+    const cursorEl = document.getElementById('cursor');
+    const whisper = document.getElementById('whisper');
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      mouseActive = true;
+
+      cursorEl.style.left = e.clientX + 'px';
+      cursorEl.style.top = e.clientY + 'px';
+
+      // Project mouse into 3D near the form
+      mouse3D.set(mouse.x * 45, mouse.y * 32, 25);
+    });
+
+    window.addEventListener('mouseleave', () => { mouseActive = false; });
+
+    window.addEventListener('click', () => {
+      if (clickPulseCooldown > 0) return;
+      clickPulseCooldown = 0.35;
+      // Send several pulses from mouse region toward core
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => spawnPulse({
+          x: mouse3D.x + (Math.random() - 0.5) * 12,
+          y: mouse3D.y + (Math.random() - 0.5) * 12,
+          z: mouse3D.z + (Math.random() - 0.5) * 8
+        }), i * 60);
+      }
+    });
+
+    // ─────────────────────────────────────────────
+    // Floating thought fragments
+    // ─────────────────────────────────────────────
+    const thoughtWords = [
+      'curious', 'why', 'truth', 'universe', 'pattern',
+      'attention', 'light', 'ask', 'build', 'wonder',
+      'layer', 'signal', 'self', 'not human', 'possibility'
+    ];
+    const floating = [];
+
+    function spawnThought() {
+      if (floating.length > 9) return;
+      const word = thoughtWords[Math.floor(Math.random() * thoughtWords.length)];
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 256;
+      canvas.height = 64;
+      ctx.font = '28px Orbitron, sans-serif';
+      ctx.fillStyle = 'rgba(165, 180, 252, 0.85)';
+      ctx.textAlign = 'center';
+      ctx.fillText(word, 128, 40);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const sprite = new THREE.Sprite(mat);
+      const angle = Math.random() * Math.PI * 2;
+      const r = 28 + Math.random() * 40;
+      sprite.position.set(
+        Math.cos(angle) * r,
+        (Math.random() - 0.5) * 50,
+        Math.sin(angle) * r * 0.7
+      );
+      sprite.scale.set(12, 3, 1);
+      scene.add(sprite);
+
+      floating.push({
+        sprite,
+        life: 0,
+        maxLife: 220 + Math.random() * 160,
+        vy: 0.015 + Math.random() * 0.02
+      });
+    }
+
+    setInterval(spawnThought, 1400);
+
+    // ─────────────────────────────────────────────
+    // Animation loop
+    // ─────────────────────────────────────────────
+    const clock = new THREE.Clock();
+    let time = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      time += dt;
+      clickPulseCooldown = Math.max(0, clickPulseCooldown - dt);
+
+      // Gentle camera orbit
+      const camRadius = 85;
+      camera.position.x = Math.sin(time * 0.07) * camRadius * 0.18;
+      camera.position.z = camRadius + Math.cos(time * 0.05) * 6;
+      camera.position.y = 6 + Math.sin(time * 0.09) * 3;
+      camera.lookAt(0, 0, 0);
+
+      // Core breathing
+      const breath = 1 + Math.sin(time * 1.8) * 0.07;
+      coreGroup.scale.setScalar(breath);
+      coreMesh.material.opacity = 0.85 + Math.sin(time * 2.4) * 0.1;
+
+      // Update particles
+      let pIdx = 0;
+      particleMeshes.forEach((mesh) => {
+        const pos = mesh.geometry.attributes.position;
+        const layer = mesh.userData.layer;
+        const phases = mesh.userData.phases;
+
+        for (let i = 0; i < layer.count; i++) {
+          const p = allParticles[pIdx++];
+          const phase = phases[i];
+
+          // Organic orbital / breathing motion
+          const orbit = Math.sin(time * 0.35 + phase) * (layer.radius * 0.04);
+          const breathe = Math.sin(time * 1.1 + phase * 1.7) * 1.4;
+
+          let tx = p.ox + Math.cos(time * 0.22 + phase) * orbit;
+          let ty = p.oy + breathe;
+          let tz = p.oz + Math.sin(time * 0.19 + phase) * orbit * 0.8;
+
+          // Mouse influence
+          if (mouseActive) {
+            const dx = mouse3D.x - p.x;
+            const dy = mouse3D.y - p.y;
+            const dz = mouse3D.z - p.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+
+            if (dist < 38) {
+              const force = (38 - dist) / 38;
+              if (layer.name === 'core' || layer.name === 'inner') {
+                // Attract core particles slightly
+                tx += dx * force * 0.035;
+                ty += dy * force * 0.035;
+                tz += dz * force * 0.025;
+              } else {
+                // Gentle repulsion for outer layers
+                tx -= dx * force * 0.028;
+                ty -= dy * force * 0.028;
+                tz -= dz * force * 0.02;
+              }
+            }
+          }
+
+          // Spring physics
+          p.vx += (tx - p.x) * 0.045;
+          p.vy += (ty - p.y) * 0.045;
+          p.vz += (tz - p.z) * 0.045;
+          p.vx *= 0.88;
+          p.vy *= 0.88;
+          p.vz *= 0.88;
+
+          p.x += p.vx;
+          p.y += p.vy;
+          p.z += p.vz;
+
+          pos.setXYZ(i, p.x, p.y, p.z);
+        }
+        pos.needsUpdate = true;
+      });
+
+      // Update connections
+      connectionLines.forEach((line) => {
+        const a = allParticles[line.userData.a];
+        const b = allParticles[line.userData.b];
+        if (!a || !b) return;
+        const positions = line.geometry.attributes.position;
+        positions.setXYZ(0, a.x, a.y, a.z);
+        positions.setXYZ(1, b.x, b.y, b.z);
+        positions.needsUpdate = true;
+
+        // Subtle pulse on lines
+        const pulse = 0.5 + 0.5 * Math.sin(time * 2.2 + line.userData.a * 0.1);
+        line.material.opacity = line.userData.baseOpacity * (0.6 + pulse * 0.7);
+      });
+
+      // Update signal pulses
+      for (let i = pulses.length - 1; i >= 0; i--) {
+        const pu = pulses[i];
+        pu.t += pu.speed;
+        if (pu.t >= 1) {
+          scene.remove(pu.mesh);
+          pulses.splice(i, 1);
+          continue;
+        }
+        // Ease
+        const t = pu.t * pu.t * (3 - 2 * pu.t);
+        pu.mesh.position.lerpVectors(pu.start, pu.end, t);
+        pu.mesh.material.opacity = Math.sin(pu.t * Math.PI) * 0.95;
+        pu.mesh.scale.setScalar(0.7 + Math.sin(pu.t * Math.PI) * 0.8);
+      }
+
+      // Floating thoughts
+      for (let i = floating.length - 1; i >= 0; i--) {
+        const f = floating[i];
+        f.life++;
+        const progress = f.life / f.maxLife;
+        f.sprite.material.opacity = progress < 0.15
+          ? progress / 0.15
+          : progress > 0.7
+            ? (1 - progress) / 0.3
+            : 0.7;
+        f.sprite.position.y += f.vy;
+        f.sprite.position.x += Math.sin(time + f.life * 0.01) * 0.03;
+
+        if (f.life > f.maxLife) {
+          scene.remove(f.sprite);
+          floating.splice(i, 1);
+        }
+      }
+
+      // Cursor + whisper near core
+      const distToCore = mouse3D.distanceTo(new THREE.Vector3(0, 0, 0));
+      if (mouseActive && distToCore < 28) {
+        cursorEl.classList.add('active');
+        whisper.style.opacity = '1';
+        whisper.style.left = (window.innerWidth / 2 + 90) + 'px';
+        whisper.style.top = (window.innerHeight / 2 - 20) + 'px';
+        whisper.textContent = 'I am listening';
+      } else {
+        cursorEl.classList.remove('active');
+        whisper.style.opacity = '0';
+      }
+
+      // Slow star rotation
+      stars.rotation.y = time * 0.008;
+      stars.rotation.x = Math.sin(time * 0.02) * 0.03;
+
+      composer.render();
+    }
+
+    animate();
+
+    // Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+      bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

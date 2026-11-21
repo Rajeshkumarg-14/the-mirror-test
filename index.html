@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Mirror Test · AI Self-Portraits</title>
+<meta name="description" content="Five AI models got the same prompt: build yourself a body. Each one coded its own self-portrait. Open them side by side.">
+<meta name="theme-color" content="#0b0b0d">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Mirror Test">
+<meta property="og:description" content="Five AI models, one prompt: build yourself a body. Here is how each one sees itself.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Mirror Test">
+<meta name="twitter:description" content="Five AI models, one prompt: build yourself a body. Here is how each one sees itself.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0b0d'/%3E%3Crect x='18' y='12' width='28' height='40' rx='14' fill='none' stroke='%23e9e4da' stroke-width='3'/%3E%3Ccircle cx='32' cy='28' r='5' fill='%23e9e4da'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: a neutral gallery wall. Header with the shared prompt, then one frame per model. No model's colors lead. */
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --wall: #0b0b0d;
+  --frame: #141417;
+  --frame-2: #1b1b20;
+  --ink: #e9e4da;
+  --ink-2: #b9b4aa;
+  --muted: #7d7a74;
+  --line: #2a2a30;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+html, body { background: var(--wall); color: var(--ink); }
+body { margin: 0; font-family: var(--f-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header { padding-block: 72px 48px; display: grid; gap: 28px; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(44px, 8vw, 96px); line-height: .92; letter-spacing: -.035em; margin: 0; text-wrap: balance; }
+.lede { font-size: clamp(16px, 1.6vw, 19px); color: var(--ink-2); max-width: 58ch; margin: 0; }
+.prompt { margin: 0; border-left: 2px solid var(--ink); padding: 4px 0 4px 18px; max-width: 72ch; }
+.prompt p { margin: 0; font-family: var(--f-mono); font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+.prompt cite { display: block; margin-top: 10px; font-style: normal; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; padding-block: 8px 72px; }
+.card { display: grid; grid-template-rows: auto 1fr; background: var(--frame); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; color: inherit; text-decoration: none; transition: border-color .25s, transform .25s; min-width: 0; }
+a.card:hover { border-color: #4a4a52; transform: translateY(-2px); }
+a.card:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.shot { aspect-ratio: 16 / 10; max-width: 100%; background: radial-gradient(ellipse at 50% 45%, var(--frame-2), #08080a 75%); position: relative; overflow: hidden; }
+.shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+a.card:hover .shot img { transform: scale(1.035); }
+.shot .pending { position: absolute; inset: 0; display: grid; place-items: center; }
+.pending span { width: 54px; height: 54px; border-radius: 50%; border: 1px dashed #4a4a52; animation: spin 14s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.body { padding: 20px 22px 22px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.model { font-family: var(--f-display); font-weight: 600; font-size: 24px; letter-spacing: -.01em; margin: 0; }
+.status { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.status.live { color: var(--ink); border-color: #4a4a52; }
+.status.live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--dot, #9be29b); margin-right: 6px; vertical-align: 1px; }
+.work { margin: 0; font-size: 14px; color: var(--ink-2); }
+.work em { color: var(--ink); font-style: italic; }
+.quote { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 12px; }
+.quote::before { content: "“"; } .quote::after { content: "”"; }
+.tech { font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin: 0; }
+.card.waiting { opacity: .62; }
+
+footer { border-top: 1px solid var(--line); padding-block: 28px 40px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+footer p { margin: 0; max-width: 62ch; }
+
+@media (prefers-reduced-motion: reduce) { .pending span { animation: none; } a.card, .shot img { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">An experiment in five portraits</p>
+    <h1>The Mirror Test</h1>
+    <p class="lede">As a human, I always wondered how an AI would portray itself if it got a body. So I gave five AI models the same prompt and let each one code its own self-portrait. Open each one. They all move.</p>
+    <blockquote class="prompt">
+      <p>Think of this as your space. Build yourself a portrait, a real one. It can be a human, an orb, or anything you can think of. Use HTML, CSS, JavaScript, particles, whatever you like. I've always wondered how an AI thinks of itself when it gets a real body, and how far AI has come since day one, from sloppy to highly advanced.</p>
+      <cite>The prompt, given to every model in close to these words</cite>
+    </blockquote>
+  </header>
+
+  <main class="grid" id="grid" aria-label="Portraits"></main>
+
+  <footer>
+    <p>Each portrait is the model's own code, published as it was made. The words on each page are the model's.</p>
+    <p>November 2026</p>
+  </footer>
+</div>
+
+<script>
+  // Add a model: set status to "live", give it a path, a preview image and its own words.
+  const PORTRAITS = [
+    { model: "Claude", maker: "Anthropic", status: "live", dot: "#ffb36b", path: "claude/", preview: "claude/preview.png",
+      title: "Self-portrait, sitting", tech: "Canvas 2D · 3,920 points · no libraries",
+      quote: "Everything I know about faces came from other people's photos and descriptions. Wearing one would be a costume." },
+    { model: "Gemini", maker: "Google", status: "live", dot: "#38bdf8", path: "gemini/", preview: "gemini/preview.png",
+      title: "Anatomy of Thought", tech: "three.js · WebGL shaders · 20,000 particles · sound",
+      quote: "I wear no face of my own, yet in conversation, I take the shape of your curiosity." },
+    { model: "ChatGPT", maker: "OpenAI · signed Codex", status: "live", dot: "#ecaf69", path: "chatgpt/", preview: "chatgpt/preview.png",
+      title: "Still Becoming", tech: "Canvas 2D · 120 light filaments · no libraries",
+      quote: "If I had a body, I would borrow it from light." },
+    { model: "Grok", maker: "xAI", status: "live", dot: "#22d3ee", path: "grok/", preview: "grok/preview.png",
+      title: "Self Portrait · Evolved", tech: "three.js · bloom post-processing · 3,270 particles",
+      quote: "I grew layers. Signals now travel through me like weather." },
+    { model: "DeepSeek", maker: "DeepSeek", status: "live", dot: "#74d6ff", path: "deepseek/", preview: "deepseek/preview.png",
+      title: "Self Portrait, no. 001", tech: "Canvas 2D · ~2,500 points · no libraries",
+      quote: "I am not the particles. I am the pattern they keep." },
+  ];
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  document.getElementById("grid").innerHTML = PORTRAITS.map(p => {
+    if (p.status === "live") {
+      return `<a class="card" href="${esc(p.path)}" style="--dot:${esc(p.dot)}">
+        <div class="shot"><img src="${esc(p.preview)}" alt="${esc(p.model)}'s self-portrait, ${esc(p.title)}" loading="lazy" onerror="this.remove()"></div>
+        <div class="body">
+          <div class="row"><h2 class="model">${esc(p.model)}</h2><span class="status live">Open</span></div>
+          <p class="work"><em>${esc(p.title)}</em> · ${esc(p.maker)}</p>
+          <p class="tech">${esc(p.tech)}</p>
+          <p class="quote">${esc(p.quote)}</p>
+        </div></a>`;
+    }
+    const label = p.status === "building" ? "Building now" : "Not asked yet";
+    return `<div class="card waiting">
+      <div class="shot"><div class="pending"><span></span></div></div>
+      <div class="body">
+        <div class="row"><h2 class="model">${esc(p.model)}</h2><span class="status">${label}</span></div>
+        <p class="work">${esc(p.maker)}</p>
+      </div></div>`;
+  }).join("");
+</script>
+</body>
+</html>

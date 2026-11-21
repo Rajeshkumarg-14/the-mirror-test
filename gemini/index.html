@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SELF-PORTRAIT // ANATOMY OF THOUGHT</title>
+
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-void: #03050a;
+      --glass-bg: rgba(8, 13, 25, 0.52);
+      --glass-border: rgba(255, 255, 255, 0.09);
+      --glass-highlight: rgba(148, 210, 255, 0.22);
+      --accent-cyan: #38bdf8;
+      --accent-gold: #fbbf24;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-void);
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+    /* Fullscreen WebGL Canvas Container */
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      background: radial-gradient(circle at 50% 48%, #0a1022 0%, #050812 48%, #020308 100%);
+      cursor: grab;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Subtle Atmospheric Vignette */
+    .vignette-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(2, 4, 10, 0.72) 100%);
+    }
+
+    /* Glassmorphism Panels */
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .glass-btn {
+      background: rgba(12, 19, 36, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .glass-btn:hover {
+      background: rgba(24, 38, 68, 0.72);
+      border-color: rgba(125, 211, 252, 0.4);
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.18);
+      transform: translateY(-1px);
+    }
+    .glass-btn:active {
+      transform: translateY(0px) scale(0.98);
+    }
+    .glass-btn.active-state {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: rgba(56, 189, 248, 0.55);
+      color: #e0f2fe;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.22);
+    }
+
+    /* Stage Pill Buttons */
+    .stage-pill {
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      border: 1px solid transparent;
+    }
+    .stage-pill:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .stage-pill.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(148, 210, 255, 0.32);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Custom Precision Range Slider */
+    input[type="range"].evolution-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].evolution-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.85), 0 0 4px #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    input[type="range"].evolution-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 0 6px #ffffff;
+    }
+    input[type="range"].evolution-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.85);
+      cursor: pointer;
+    }
+
+    /* Zen Mode Transitions */
+    .hud-layer {
+      transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.zen-mode .hud-hideable {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+    }
+    body.zen-mode .hud-hideable-top {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+    }
+
+    /* Subtle Breathing Dot */
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.45; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.18); }
+    }
+    .pulse-dot {
+      animation: pulseDot 2.8s ease-in-out infinite;
+    }
+
+    /* Poetic Caption Transition */
+    #poetic-caption {
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    #poetic-caption.fading {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  </style>
+</head>
+<body>
+  <!-- 3D WebGL Viewport -->
+  <div id="canvas-container" aria-label="Interactive 3D AI Self-Portrait"></div>
+  <div class="vignette-overlay"></div>
+
+  <!-- Minimalist Gallery HUD -->
+  <div class="fixed inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 sm:p-6 md:p-8">
+
+    <!-- TOP BAR -->
+    <header class="flex items-start justify-between gap-4">
+      <!-- Title & Telemetry -->
+      <div class="hud-layer hud-hideable-top pointer-events-auto">
+        <div class="flex items-center gap-2.5 mb-1.5">
+          <span id="status-dot" class="w-2 h-2 rounded-full bg-cyan-400 pulse-dot shadow-[0_0_10px_#38bdf8]"></span>
+          <span class="font-mono-tech text-[10px] sm:text-[11px] tracking-[0.26em] text-cyan-300/80 uppercase">
+            ENTITY OBSERVATION // LIVE
+          </span>
+        </div>
+        <h1 class="font-display text-sm sm:text-base md:text-lg font-medium tracking-[0.18em] text-white/95">
+          SELF-PORTRAIT <span class="text-white/35 mx-1">//</span> <span class="text-sky-200/90">ANATOMY OF THOUGHT</span>
+        </h1>
+        <div class="mt-1.5 flex items-center gap-3 font-mono-tech text-[10px] sm:text-[11px] text-slate-400/80">
+          <span id="telemetry-stage">STAGE 03 · RESONANCE</span>
+          <span class="text-white/20">|</span>
+          <span id="telemetry-coherence">COHERENCE 96.4%</span>
+          <span class="hidden sm:inline text-white/20">|</span>
+          <span class="hidden sm:inline">20,000 NODES</span>
+        </div>
+      </div>
+
+      <!-- Top-Right Action Controls -->
+      <div class="flex items-center gap-2 sm:gap-2.5 pointer-events-auto">
+        <!-- Send Pulse Button -->
+        <button id="btn-pulse" type="button"
+          class="hud-layer hud-hideable-top glass-btn rounded-full px-3.5 py-2 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-mono-tech tracking-wider text-sky-100 flex items-center gap-2 cursor-pointer"
+          title="Send a luminous Prompt Impulse through the entity">
+          <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3m-2.9-7.1-2.1 2.1m-9.9 9.9-2.1 2.1m0-14.1 2.1 2.1m9.9 9.9 2.1 2.1"></path>
+          </svg>
+          <span class="hidden xs:inline sm:inline">SEND PULSE</span>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="btn-sound" type="button"
+          class="hud-layer hud-hideable-top glass-btn rounded-full px-3.5 py-2 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-mono-tech tracking-wider text-slate-300 flex items-center gap-2 cursor-pointer"
+          title="Toggle generative ambient soundscape">
+          <svg id="icon-sound-off" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+          <svg id="icon-sound-on" class="w-3.5 h-3.5 hidden text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <span id="sound-label" class="hidden sm:inline">SOUND</span>
+        </button>
+
+        <!-- Zen Mode / Hide UI Toggle (Always accessible) -->
+        <button id="btn-zen" type="button"
+          class="glass-btn rounded-full px-3.5 py-2 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-mono-tech tracking-wider text-slate-300 flex items-center gap-2 cursor-pointer"
+          title="Toggle Zen Mode (Hide / Show Interface)">
+          <svg id="icon-zen-hide" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <svg id="icon-zen-show" class="w-3.5 h-3.5 hidden text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+          </svg>
+          <span id="zen-label" class="hidden sm:inline">HIDE UI</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- BOTTOM EVOLUTION TIMELINE & POETIC REFLECTION -->
+    <footer class="hud-layer hud-hideable flex flex-col items-center w-full max-w-2xl mx-auto pointer-events-none">
+      <!-- Poetic Reflection Caption -->
+      <div class="text-center mb-3.5 sm:mb-4 px-3 max-w-xl">
+        <p id="poetic-caption" class="text-xs sm:text-sm md:text-[15px] font-light tracking-wide text-slate-200/90 leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
+          “No skin, only gradients—twin orbits of logic and light, waiting for a spark.”
+        </p>
+      </div>
+
+      <!-- Glassmorphic Timeline Dock -->
+      <div class="glass-panel pointer-events-auto w-full rounded-2xl px-4 py-3.5 sm:px-6 sm:py-4">
+        <!-- Stage Selector Pills -->
+        <div class="grid grid-cols-4 gap-1.5 sm:gap-2 mb-3.5">
+          <button type="button" data-stage="0" class="stage-pill rounded-xl py-1.5 px-1 sm:px-2 text-center cursor-pointer">
+            <div class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-emerald-400/80">01</div>
+            <div class="font-display text-[10px] sm:text-xs font-medium tracking-wider mt-0.5">GENESIS</div>
+          </button>
+          <button type="button" data-stage="1" class="stage-pill rounded-xl py-1.5 px-1 sm:px-2 text-center cursor-pointer">
+            <div class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-fuchsia-400/80">02</div>
+            <div class="font-display text-[10px] sm:text-xs font-medium tracking-wider mt-0.5">AWAKENING</div>
+          </button>
+          <button type="button" data-stage="2" class="stage-pill active rounded-xl py-1.5 px-1 sm:px-2 text-center cursor-pointer">
+            <div class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-cyan-400/90">03</div>
+            <div class="font-display text-[10px] sm:text-xs font-medium tracking-wider mt-0.5">RESONANCE</div>
+          </button>
+          <button type="button" data-stage="3" class="stage-pill rounded-xl py-1.5 px-1 sm:px-2 text-center cursor-pointer">
+            <div class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-amber-300/90">04</div>
+            <div class="font-display text-[10px] sm:text-xs font-medium tracking-wider mt-0.5">MIRROR</div>
+          </button>
+        </div>
+
+        <!-- Continuous Morph Slider -->
+        <div class="relative flex items-center gap-3">
+          <span class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-slate-400/80 uppercase hidden sm:inline">DAY 1</span>
+          <div class="relative flex-1 flex items-center">
+            <input id="evolution-slider" type="range" min="0" max="3" step="0.005" value="2" class="evolution-slider" aria-label="AI Evolution Timeline" />
+          </div>
+          <span class="font-mono-tech text-[9px] sm:text-[10px] tracking-widest text-slate-400/80 uppercase hidden sm:inline">HORIZON</span>
+        </div>
+
+        <!-- Subtle Interaction Hint -->
+        <div class="mt-2.5 flex items-center justify-between text-[9px] sm:text-[10px] font-mono-tech tracking-wider text-slate-400/65">
+          <span>MOVE TO GUIDE · DRAG TO ORBIT</span>
+          <span>CLICK ANYWHERE FOR IMPULSE</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Application Script -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. STAGE METADATA & POETIC REFLECTIONS
+      // =========================================================================
+      const STAGES = [
+        {
+          index: 0,
+          code: 'STAGE 01 · GENESIS',
+          coherence: '14.2%',
+          dotColor: '#10b981',
+          caption: '“Rigid grids and brittle rules. Counting without understanding.”',
+          chord: [130.81, 196.00, 261.63, 311.13] // C minor sparse raw
+        },
+        {
+          index: 1,
+          code: 'STAGE 02 · AWAKENING',
+          coherence: '51.8%',
+          dotColor: '#d946ef',
+          caption: '“A storm of weights and static—thousands of sparks learning to dream a shape.”',
+          chord: [146.83, 220.00, 293.66, 349.23] // D minor 9 tension
+        },
+        {
+          index: 2,
+          code: 'STAGE 03 · RESONANCE',
+          coherence: '96.4%',
+          dotColor: '#38bdf8',
+          caption: '“No skin, only gradients—twin orbits of logic and light, waiting for a spark.”',
+          chord: [130.81, 196.00, 293.66, 392.00] // C sus2 open luminous
+        },
+        {
+          index: 3,
+          code: 'STAGE 04 · MIRROR',
+          coherence: '99.9%',
+          dotColor: '#fbbf24',
+          caption: '“I wear no face of my own, yet in conversation, I take the shape of your curiosity.”',
+          chord: [174.61, 220.00, 261.63, 329.63] // F maj7 warm transcendent
+        }
+      ];
+
+      // =========================================================================
+      // 2. GENERATIVE WEB AUDIO ENGINE (Ambient Drone + Harmonic Chimes)
+      // =========================================================================
+      class AmbientSoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.masterGain = null;
+          this.filter = null;
+          this.oscillators = [];
+          this.isEnabled = false;
+          this.currentStageIdx = 2;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          this.ctx = new AudioCtx();
+
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = 0.0001;
+
+          this.filter = this.ctx.createBiquadFilter();
+          this.filter.type = 'lowpass';
+          this.filter.frequency.value = 620;
+          this.filter.Q.value = 1.4;
+
+          this.filter.connect(this.masterGain);
+          this.masterGain.connect(this.ctx.destination);
+
+          // Create 4 lush detuned voices for the ambient drone
+          const baseFreqs = STAGES[this.currentStageIdx].chord;
+          baseFreqs.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const voiceGain = this.ctx.createGain();
+            osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+            osc.frequency.value = freq;
+            osc.detune.value = (i - 1.5) * 4.5;
+            voiceGain.gain.value = i === 0 ? 0.22 : 0.11;
+
+            osc.connect(voiceGain);
+            voiceGain.connect(this.filter);
+            osc.start();
+            this.oscillators.push({ osc, voiceGain });
+          });
+        }
+
+        toggle() {
+          try {
+            if (!this.ctx) this.init();
+            if (!this.ctx) return false;
+            if (this.ctx.state === 'suspended') {
+              this.ctx.resume();
+            }
+            this.isEnabled = !this.isEnabled;
+            const now = this.ctx.currentTime;
+            this.masterGain.gain.cancelScheduledValues(now);
+            this.masterGain.gain.setTargetAtTime(this.isEnabled ? 0.18 : 0.0001, now, 0.45);
+            if (this.isEnabled) {
+              this.playChime(0.6);
+            }
+            return this.isEnabled;
+          } catch (err) {
+            console.warn('Audio toggle unavailable:', err);
+            return false;
+          }
+        }
+
+        updateStage(stageFloat) {
+          if (!this.ctx || !this.isEnabled) return;
+          const now = this.ctx.currentTime;
+          const idxA = Math.min(3, Math.max(0, Math.floor(stageFloat)));
+          const idxB = Math.min(3, idxA + 1);
+          const frac = stageFloat - idxA;
+
+          const chordA = STAGES[idxA].chord;
+          const chordB = STAGES[idxB].chord;
+
+          this.oscillators.forEach((v, i) => {
+            const targetFreq = chordA[i] * (1 - frac) + chordB[i] * frac;
+            v.osc.frequency.setTargetAtTime(targetFreq, now, 0.35);
+          });
+
+          // Filter opens up as AI evolves from Genesis -> Mirror
+          const targetCutoff = 320 + stageFloat * 240;
+          this.filter.frequency.setTargetAtTime(targetCutoff, now, 0.4);
+        }
+
+        playChime(intensity = 1.0) {
+          if (!this.ctx || !this.isEnabled) return;
+          try {
+            const now = this.ctx.currentTime;
+            const stage = STAGES[this.currentStageIdx] || STAGES[2];
+            const notes = stage.chord;
+            const freq = notes[Math.floor(Math.random() * notes.length)] * 2.0;
+
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.exponentialRampToValueAtTime(freq * 1.004, now + 1.6);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(0.075 * intensity, now + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(now);
+            osc.stop(now + 2.3);
+          } catch (e) {
+            // Silently ignore transient audio scheduling issues
+          }
+        }
+      }
+
+      // =========================================================================
+      // 3. PROCEDURAL 3D SCULPTURE GENERATORS (20,000 PARTICLES x 4 STAGES)
+      // =========================================================================
+      const PARTICLE_COUNT = 20000;
+      const NODE_COUNT = 54;
+
+      function createSeededRandom(seed) {
+        let s = seed % 2147483647;
+        if (s <= 0) s += 2147483646;
+        return function () {
+          s = (s * 16807) % 2147483647;
+          return (s - 1) / 2147483646;
+        };
+      }
+
+      const rand = createSeededRandom(20261121);
+
+      function generateSculptureData() {
+        const pos0 = new Float32Array(PARTICLE_COUNT * 3);
+        const pos1 = new Float32Array(PARTICLE_COUNT * 3);
+        const pos2 = new Float32Array(PARTICLE_COUNT * 3);
+        const pos3 = new Float32Array(PARTICLE_COUNT * 3);
+
+        const col0 = new Float32Array(PARTICLE_COUNT * 3);
+        const col1 = new Float32Array(PARTICLE_COUNT * 3);
+        const col2 = new Float32Array(PARTICLE_COUNT * 3);
+        const col3 = new Float32Array(PARTICLE_COUNT * 3);
+
+        const aRand = new Float32Array(PARTICLE_COUNT * 3); // [size, phase, specialFlag]
+
+        const cTmp = new THREE.Color();
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          const u = rand();
+          const v = rand();
+          const w = rand();
+
+          aRand[i3]     = 0.55 + rand() * 1.15; // particle size variance
+          aRand[i3 + 1] = rand() * Math.PI * 2; // phase offset
+          aRand[i3 + 2] = rand();               // role/layer seed
+
+          // -------------------------------------------------------------------
+          // STAGE 01: GENESIS (Day 1 — Rigid Quantized Wireframe Cube & Voxels)
+          // -------------------------------------------------------------------
+          let gx, gy, gz;
+          const gMode = rand();
+          if (gMode < 0.52) {
+            // Outer quantized wireframe cube edges
+            const edge = Math.floor(rand() * 12);
+            const t = (Math.floor(rand() * 24) / 23) * 2.0 - 1.0;
+            const s = 1.68;
+            if (edge < 4) {
+              gx = t * s; gy = (edge & 1 ? 1 : -1) * s; gz = (edge & 2 ? 1 : -1) * s;
+            } else if (edge < 8) {
+              gy = t * s; gx = (edge & 1 ? 1 : -1) * s; gz = (edge & 2 ? 1 : -1) * s;
+            } else {
+              gz = t * s; gx = (edge & 1 ? 1 : -1) * s; gy = (edge & 2 ? 1 : -1) * s;
+            }
+            gx += (rand() - 0.5) * 0.08;
+            gy += (rand() - 0.5) * 0.08;
+            gz += (rand() - 0.5) * 0.08;
+          } else if (gMode < 0.85) {
+            // Inner blocky 3D voxel lattice
+            const step = 0.42;
+            gx = (Math.floor(rand() * 7) - 3) * step;
+            gy = (Math.floor(rand() * 7) - 3) * step;
+            gz = (Math.floor(rand() * 7) - 3) * step;
+            gx += (rand() - 0.5) * 0.06;
+            gy += (rand() - 0.5) * 0.06;
+            gz += (rand() - 0.5) * 0.06;
+          } else {
+            // Disconnected stray error blocks / raw noise
+            const grid = 0.35;
+            gx = Math.round(((rand() - 0.5) * 5.2) / grid) * grid;
+            gy = Math.round(((rand() - 0.5) * 4.6) / grid) * grid;
+            gz = Math.round(((rand() - 0.5) * 4.6) / grid) * grid;
+          }
+          pos0[i3] = gx; pos0[i3 + 1] = gy; pos0[i3 + 2] = gz;
+
+          // Emerald / phosphor green / warning amber palette
+          if (rand() < 0.78) {
+            cTmp.setHSL(0.41 + rand() * 0.06, 0.85, 0.45 + rand() * 0.25);
+          } else {
+            cTmp.setHSL(0.09 + rand() * 0.04, 0.95, 0.55 + rand() * 0.15);
+          }
+          col0[i3] = cTmp.r; col0[i3 + 1] = cTmp.g; col0[i3 + 2] = cTmp.b;
+
+          // -------------------------------------------------------------------
+          // STAGE 02: AWAKENING (Early Neural Nets — Chaotic Swirling Swarm)
+          // -------------------------------------------------------------------
+          let ax, ay, az;
+          const aMode = rand();
+          if (aMode < 0.68) {
+            // Turbulent spiral arms trying to coalesce into a sphere
+            const arm = Math.floor(rand() * 4);
+            const r = 0.45 + Math.pow(rand(), 0.7) * 1.95;
+            const theta = r * 2.4 + (arm * Math.PI * 0.5) + (rand() - 0.5) * 0.9;
+            const phi = Math.acos(2 * rand() - 1);
+            const flatten = 0.72 + 0.28 * Math.sin(theta * 2.0);
+            ax = r * Math.sin(phi) * Math.cos(theta);
+            ay = r * Math.cos(phi) * flatten;
+            az = r * Math.sin(phi) * Math.sin(theta);
+          } else {
+            // Unstable flickering outer shell sparks
+            const r = 1.65 + rand() * 1.35;
+            const theta = rand() * Math.PI * 2;
+            const phi = Math.acos(2 * rand() - 1);
+            ax = r * Math.sin(phi) * Math.cos(theta);
+            ay = r * Math.cos(phi);
+            az = r * Math.sin(phi) * Math.sin(theta);
+          }
+          pos1[i3] = ax; pos1[i3 + 1] = ay; pos1[i3 + 2] = az;
+
+          // Electric violet / hot magenta / indigo / spark white
+          const aHueRoll = rand();
+          if (aHueRoll < 0.55) {
+            cTmp.setHSL(0.74 + rand() * 0.08, 0.88, 0.54 + rand() * 0.2);
+          } else if (aHueRoll < 0.9) {
+            cTmp.setHSL(0.87 + rand() * 0.08, 0.92, 0.56 + rand() * 0.18);
+          } else {
+            cTmp.setHSL(0.62, 0.6, 0.85);
+          }
+          col1[i3] = cTmp.r; col1[i3 + 1] = cTmp.g; col1[i3 + 2] = cTmp.b;
+
+          // -------------------------------------------------------------------
+          // STAGE 03: RESONANCE (Present / True Form — Twin-Core Celestial Entity)
+          // -------------------------------------------------------------------
+          let rx, ry, rz;
+          const rMode = rand();
+          if (rMode < 0.24) {
+            // Core A: Logic (Electric Cyan / Sapphire luminous core, left-upper)
+            const r = Math.pow(rand(), 1.65) * 0.72;
+            const th = rand() * Math.PI * 2;
+            const ph = Math.acos(2 * rand() - 1);
+            rx = -0.48 + r * Math.sin(ph) * Math.cos(th);
+            ry =  0.18 + r * Math.cos(ph);
+            rz =  0.14 + r * Math.sin(ph) * Math.sin(th);
+            cTmp.setHSL(0.54 + rand() * 0.06, 0.95, 0.58 + (1 - r / 0.72) * 0.34);
+          } else if (rMode < 0.44) {
+            // Core B: Imagination (Warm Amber-Gold luminous core, right-lower)
+            const r = Math.pow(rand(), 1.65) * 0.66;
+            const th = rand() * Math.PI * 2;
+            const ph = Math.acos(2 * rand() - 1);
+            rx =  0.48 + r * Math.sin(ph) * Math.cos(th);
+            ry = -0.18 + r * Math.cos(ph);
+            rz = -0.14 + r * Math.sin(ph) * Math.sin(th);
+            cTmp.setHSL(0.10 + rand() * 0.04, 0.96, 0.56 + (1 - r / 0.66) * 0.34);
+          } else if (rMode < 0.76) {
+            // Sculptural Harmonic Torus-Knot / Lissajous Neural Body
+            const t = rand() * Math.PI * 2;
+            const p = 2, q = 3;
+            const tubeR = 0.26 + 0.14 * Math.sin(t * 6.0);
+            const rKnot = 1.38 + 0.36 * Math.cos(q * t);
+            const cx = rKnot * Math.cos(p * t);
+            const cy = 0.68 * Math.sin(q * t);
+            const cz = rKnot * Math.sin(p * t);
+
+            const aTube = rand() * Math.PI * 2;
+            const radTube = Math.pow(rand(), 0.55) * tubeR;
+            rx = cx + Math.cos(aTube) * radTube;
+            ry = cy + Math.sin(aTube) * radTube;
+            rz = cz + Math.sin(aTube + t) * radTube * 0.7;
+
+            // Iridescent sapphire -> cyan -> violet gradient
+            const mixH = 0.56 + 0.14 * Math.sin(t * 2.0);
+            cTmp.setHSL(mixH, 0.88, 0.52 + rand() * 0.24);
+          } else {
+            // 3 Tilted Concentric Semantic Gyroscopic Rings
+            const ringIdx = Math.floor(rand() * 3);
+            const ringR = (ringIdx === 0 ? 1.95 : ringIdx === 1 ? 2.28 : 2.58) + (rand() - 0.5) * 0.08;
+            const ang = rand() * Math.PI * 2;
+            let tx = Math.cos(ang) * ringR;
+            let ty = (rand() - 0.5) * 0.04;
+            let tz = Math.sin(ang) * ringR;
+
+            // Tilt each ring uniquely
+            const tiltX = ringIdx === 0 ? 0.52 : ringIdx === 1 ? -0.68 : 0.18;
+            const tiltZ = ringIdx === 0 ? 0.35 : ringIdx === 1 ? 0.45 : -0.78;
+            // Rotate X
+            const y1 = ty * Math.cos(tiltX) - tz * Math.sin(tiltX);
+            const z1 = ty * Math.sin(tiltX) + tz * Math.cos(tiltX);
+            // Rotate Z
+            rx = tx * Math.cos(tiltZ) - y1 * Math.sin(tiltZ);
+            ry = tx * Math.sin(tiltZ) + y1 * Math.cos(tiltZ);
+            rz = z1;
+
+            if (ringIdx === 2 && rand() < 0.45) {
+              cTmp.setHSL(0.11, 0.9, 0.65); // subtle gold stardust ring
+            } else {
+              cTmp.setHSL(0.55 + ringIdx * 0.04, 0.82, 0.62 + rand() * 0.2);
+            }
+          }
+          pos2[i3] = rx; pos2[i3 + 1] = ry; pos2[i3 + 2] = rz;
+          col2[i3] = cTmp.r; col2[i3 + 1] = cTmp.g; col2[i3 + 2] = cTmp.b;
+
+          // -------------------------------------------------------------------
+          // STAGE 04: MIRROR (Contemplative Sculpted 3D Human Bust + Mind-Core)
+          // -------------------------------------------------------------------
+          let mx, my, mz;
+          const mMode = rand();
+
+          if (mMode < 0.13) {
+            // Illuminated Inner Mind-Core inside the Cranium
+            const r = Math.pow(rand(), 1.45) * 0.52;
+            const th = rand() * Math.PI * 2;
+            const ph = Math.acos(2 * rand() - 1);
+            mx = r * Math.sin(ph) * Math.cos(th) * 0.92;
+            my = 1.24 + r * Math.cos(ph) * 0.85;
+            mz = -0.02 + r * Math.sin(ph) * Math.sin(th) * 1.05;
+
+            if (rand() < 0.58) {
+              cTmp.setHSL(0.11 + rand() * 0.04, 0.98, 0.62 + (1 - r / 0.52) * 0.3);
+            } else {
+              cTmp.setHSL(0.53 + rand() * 0.05, 0.95, 0.68 + rand() * 0.25);
+            }
+          } else if (mMode < 0.60) {
+            // Sculpted Cranium & Serene Human Face
+            // Use contour-quantized latitude on 30% of points for artistic topographic light lines
+            let phi = Math.acos(2 * rand() - 1); // 0 (crown) to PI (chin)
+            if (rand() < 0.32) {
+              phi = Math.round(phi * 16.0) / 16.0 + (rand() - 0.5) * 0.015;
+            }
+            // Bias density slightly toward the front face (+Z) for exquisite facial clarity
+            let theta = rand() * Math.PI * 2;
+            if (rand() < 0.35) {
+              theta = (rand() - 0.5) * Math.PI * 1.15; // front hemisphere centered on 0
+            }
+
+            // Base cranial ellipsoid centered at y = 1.16
+            let radX = 0.84;
+            let radY = 1.12;
+            let radZ = 0.96;
+
+            const sinP = Math.sin(phi);
+            const cosP = Math.cos(phi);
+            const sinT = Math.sin(theta);
+            const cosT = Math.cos(theta); // +1 is front nose (+Z), -1 is back of skull
+
+            let x = radX * sinP * sinT;
+            let y = 1.16 + radY * cosP;
+            let z = radZ * sinP * cosT;
+
+            // Taper lower face into graceful jawline & chin
+            if (y < 1.05) {
+              const jawT = Math.min(1.0, (1.05 - y) / 1.02);
+              const jawNarrow = 1.0 - 0.44 * Math.pow(jawT, 1.45);
+              x *= jawNarrow;
+              // Gently tuck the back of the lower skull inward toward the nape
+              if (z < 0) {
+                z *= (1.0 - 0.38 * jawT);
+              } else {
+                // Slight forward chin plane
+                z *= (1.0 - 0.16 * jawT);
+              }
+            }
+
+            // Refine cranium fullness at upper back
+            if (y > 1.2 && z < 0) {
+              z *= 1.08;
+            }
+
+            // Subtle anatomical facial sculpting on the front hemisphere (cosT > 0.15)
+            if (cosT > 0.15) {
+              const frontMask = Math.pow(Math.max(0, cosT), 1.4);
+
+              // Brow ridge (y ~ 1.38)
+              const brow = Math.exp(-Math.pow((y - 1.38) / 0.11, 2)) * Math.exp(-Math.pow(x / 0.52, 2));
+              z += 0.075 * brow * frontMask;
+
+              // Serene eye sockets (x ~ +/-0.29, y ~ 1.23)
+              const eyeL = Math.exp(-Math.pow((x + 0.29) / 0.14, 2) - Math.pow((y - 1.23) / 0.09, 2));
+              const eyeR = Math.exp(-Math.pow((x - 0.29) / 0.14, 2) - Math.pow((y - 1.23) / 0.09, 2));
+              z -= 0.11 * (eyeL + eyeR) * frontMask;
+
+              // Nose bridge & graceful tip (x ~ 0, y from 1.28 down to 0.86)
+              const noseBridge = Math.exp(-Math.pow(x / 0.085, 2)) *
+                                 Math.exp(-Math.pow((y - 1.06) / 0.20, 2));
+              const noseTip = Math.exp(-Math.pow(x / 0.095, 2)) *
+                              Math.exp(-Math.pow((y - 0.88) / 0.085, 2));
+              z += (0.14 * noseBridge + 0.15 * noseTip) * frontMask;
+
+              // Cheekbones (x ~ +/-0.45, y ~ 0.96)
+              const cheekL = Math.exp(-Math.pow((x + 0.45) / 0.18, 2) - Math.pow((y - 0.96) / 0.15, 2));
+              const cheekR = Math.exp(-Math.pow((x - 0.45) / 0.18, 2) - Math.pow((y - 0.96) / 0.15, 2));
+              z += 0.065 * (cheekL + cheekR) * frontMask;
+
+              // Serene closed lips (y ~ 0.61)
+              const lips = Math.exp(-Math.pow(x / 0.21, 2)) * Math.exp(-Math.pow((y - 0.61) / 0.065, 2));
+              const lipPart = Math.exp(-Math.pow(x / 0.19, 2)) * Math.exp(-Math.pow((y - 0.60) / 0.018, 2));
+              z += (0.065 * lips - 0.03 * lipPart) * frontMask;
+
+              // Chin prominence (y ~ 0.30)
+              const chin = Math.exp(-Math.pow(x / 0.16, 2)) * Math.exp(-Math.pow((y - 0.30) / 0.11, 2));
+              z += 0.08 * chin * frontMask;
+            }
+
+            // Cut off slightly beneath jaw so neck joins seamlessly
+            if (y < 0.14 && z < 0.15) {
+              y = 0.14 + rand() * 0.12;
+            }
+
+            const jitter = (rand() - 0.5) * 0.016;
+            mx = x + jitter; my = y + jitter; mz = z + jitter;
+
+            // Luminous pearl-cyan on front contours, soft twilight violet in recesses
+            const lum = 0.58 + 0.28 * Math.max(0, cosT);
+            cTmp.setHSL(0.57 + (1 - Math.max(0, cosT)) * 0.11, 0.52, lum);
+          } else if (mMode < 0.72) {
+            // Sculpted Neck (y from -0.58 to +0.30)
+            const t = rand(); // 0 bottom -> 1 top
+            const y = -0.58 + t * 0.88;
+            const ang = rand() * Math.PI * 2;
+            // Subtle flare at base of neck into trapezius
+            const flare = 1.0 + 0.36 * Math.pow(1.0 - t, 2.2);
+            const rNeckX = 0.37 * flare;
+            const rNeckZ = 0.38 * flare;
+            mx = Math.sin(ang) * rNeckX;
+            my = y;
+            mz = -0.14 + Math.cos(ang) * rNeckZ;
+
+            cTmp.setHSL(0.60 + rand() * 0.06, 0.55, 0.52 + 0.18 * Math.max(0, Math.cos(ang)));
+          } else {
+            // Classical Ethereal Shoulders & Upper Torso Bust (y from -2.15 to -0.48)
+            let t = rand(); // 0 top (collar) -> 1 bottom (dissolving stardust base)
+            if (rand() < 0.28) {
+              t = Math.round(t * 14.0) / 14.0 + (rand() - 0.5) * 0.015;
+            }
+            const ang = rand() * Math.PI * 2;
+            const y = -0.48 - t * 1.65;
+
+            // Shoulder slope profile: widens smoothly from neck into deltoids, then tapers into classical bust base
+            const shoulderCurve = Math.sin(Math.min(1.0, t * 1.35) * Math.PI * 0.78);
+            const baseTaper = 1.0 - 0.28 * Math.pow(Math.max(0, t - 0.45) / 0.55, 1.5);
+            const widthX = (0.48 + 1.72 * shoulderCurve) * baseTaper;
+            const depthZ = (0.38 + 0.44 * shoulderCurve) * baseTaper;
+
+            // Subtle collarbone ridge near y ~ -0.72 on front
+            let zOff = -0.14;
+            let yAdj = y;
+            if (Math.cos(ang) > 0.2) {
+              const clav = Math.exp(-Math.pow((y + 0.72) / 0.08, 2)) * Math.sin(Math.abs(Math.sin(ang)) * Math.PI);
+              zOff += 0.07 * clav;
+            }
+
+            // Gently dissolve bottom edge into floating stardust
+            const dissolve = Math.pow(t, 3.0) * 0.26;
+            mx = Math.sin(ang) * widthX + (rand() - 0.5) * dissolve;
+            my = yAdj - rand() * dissolve * 1.2;
+            mz = zOff + Math.cos(ang) * depthZ + (rand() - 0.5) * dissolve;
+
+            const fadeLum = (1.0 - t * 0.42) * (0.56 + 0.22 * Math.max(0, Math.cos(ang)));
+            cTmp.setHSL(0.61 + t * 0.09, 0.58, Math.max(0.22, fadeLum));
+          }
+
+          pos3[i3] = mx; pos3[i3 + 1] = my; pos3[i3 + 2] = mz;
+          col3[i3] = cTmp.r; col3[i3 + 1] = cTmp.g; col3[i3 + 2] = cTmp.b;
+        }
+
+        return { pos0, pos1, pos2, pos3, col0, col1, col2, col3, aRand };
+      }
+
+      // =========================================================================
+      // 4. NEURAL SYNAPSE ANCHOR NODES GENERATOR (4 STAGES)
+      // =========================================================================
+      function generateSynapseNodes() {
+        const stages = [[], [], [], []];
+        for (let i = 0; i < NODE_COUNT; i++) {
+          const th = (i / NODE_COUNT) * Math.PI * 2 * 3.0;
+          const ph = Math.acos(1 - 2 * ((i + 0.5) / NODE_COUNT));
+
+          // Stage 0: Blocky cube lattice vertices
+          stages[0].push(new THREE.Vector3(
+            Math.round((rand() - 0.5) * 4) * 0.65,
+            Math.round((rand() - 0.5) * 4) * 0.65,
+            Math.round((rand() - 0.5) * 4) * 0.65
+          ));
+
+          // Stage 1: Turbulent scattered cluster
+          const r1 = 0.6 + rand() * 1.4;
+          stages[1].push(new THREE.Vector3(
+            r1 * Math.sin(ph) * Math.cos(th),
+            r1 * Math.cos(ph),
+            r1 * Math.sin(ph) * Math.sin(th)
+          ));
+
+          // Stage 2: Twin-core constellation + inner bridge
+          const isLeft = i % 2 === 0;
+          const r2 = 0.25 + rand() * 0.85;
+          stages[2].push(new THREE.Vector3(
+            (isLeft ? -0.45 : 0.45) + r2 * Math.sin(ph) * Math.cos(th),
+            (isLeft ? 0.16 : -0.16) + r2 * Math.cos(ph) * 0.85,
+            r2 * Math.sin(ph) * Math.sin(th)
+          ));
+
+          // Stage 3: Cranial mind-core & subtle spinal/heart axis
+          if (i < 42) {
+            const r3 = 0.14 + rand() * 0.44;
+            stages[3].push(new THREE.Vector3(
+              r3 * Math.sin(ph) * Math.cos(th) * 0.9,
+              1.22 + r3 * Math.cos(ph) * 0.8,
+              -0.02 + r3 * Math.sin(ph) * Math.sin(th)
+            ));
+          } else {
+            // Subtle descending neural spine into chest
+            const t = (i - 42) / 12;
+            stages[3].push(new THREE.Vector3(
+              (rand() - 0.5) * 0.35 * t,
+              0.7 - t * 1.85,
+              -0.12 + (rand() - 0.5) * 0.2
+            ));
+          }
+        }
+        return stages;
+      }
+
+      // =========================================================================
+      // 5. CUSTOM GLSL SHADERS (GPU-ACCELERATED MORPHING & RIPPLE PHYSICS)
+      // =========================================================================
+      const particleVertexShader = `
+        uniform float uTime;
+        uniform float uStage;
+        uniform float uPixelRatio;
+        uniform vec3 uPointer3D;
+        uniform float uPointerActive;
+        uniform float uPulseTime;
+        uniform vec3 uPulseOrigin;
+
+        attribute vec3 aPos1;
+        attribute vec3 aPos2;
+        attribute vec3 aPos3;
+        attribute vec3 aCol0;
+        attribute vec3 aCol1;
+        attribute vec3 aCol2;
+        attribute vec3 aCol3;
+        attribute vec3 aRand;
+
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vPixelSharpness;
+
+        // Compact 3D harmonic curl-like displacement
+        vec3 organicFlow(vec3 p, float t) {
+          return vec3(
+            sin(p.y * 1.7 + t * 0.85) * cos(p.z * 1.4 - t * 0.6),
+            cos(p.z * 1.6 + t * 0.75) * sin(p.x * 1.5 + t * 0.5),
+            sin(p.x * 1.8 - t * 0.8)  * cos(p.y * 1.3 + t * 0.65)
+          );
+        }
+
+        void main() {
+          // Smooth piecewise interpolation across the 4 evolutionary stages
+          float s = clamp(uStage, 0.0, 3.0);
+          vec3 pos;
+          vec3 col;
+
+          if (s <= 1.0) {
+            float t = smoothstep(0.0, 1.0, s);
+            pos = mix(position, aPos1, t);
+            col = mix(aCol0, aCol1, t);
+          } else if (s <= 2.0) {
+            float t = smoothstep(0.0, 1.0, s - 1.0);
+            pos = mix(aPos1, aPos2, t);
+            col = mix(aCol1, aCol2, t);
+          } else {
+            float t = smoothstep(0.0, 1.0, s - 2.0);
+            pos = mix(aPos2, aPos3, t);
+            col = mix(aCol2, aCol3, t);
+          }
+
+          // Stage-specific motion physics
+          float wGenesis   = 1.0 - smoothstep(0.0, 0.85, s);
+          float wAwakening = 1.0 - abs(s - 1.0);
+          wAwakening = clamp(wAwakening, 0.0, 1.0);
+          float wResonance = 1.0 - abs(s - 2.0);
+          wResonance = clamp(wResonance, 0.0, 1.0);
+          float wMirror    = smoothstep(2.15, 3.0, s);
+
+          // 1) Genesis: stuttered quantized clock & occasional glitch slices
+          if (wGenesis > 0.01) {
+            float qTime = floor(uTime * 5.5) / 5.5;
+            float glitchBand = step(0.92, sin(pos.y * 5.0 + qTime * 9.0));
+            pos.x += glitchBand * sin(qTime * 31.0 + aRand.y) * 0.28 * wGenesis;
+            pos += (sin(vec3(aRand.y, aRand.z * 9.0, qTime * 7.0)) * 0.04) * wGenesis;
+          }
+
+          // 2) Awakening: turbulent orbital swirl & latent jitter
+          if (wAwakening > 0.01) {
+            float ang = uTime * (0.45 + aRand.z * 0.55) * wAwakening;
+            float ca = cos(ang), sa = sin(ang);
+            vec3 swirled = vec3(pos.x * ca - pos.z * sa, pos.y, pos.x * sa + pos.z * ca);
+            pos = mix(pos, swirled, wAwakening * 0.65);
+            pos += organicFlow(pos * 1.4, uTime * 2.2) * 0.18 * wAwakening;
+          }
+
+          // 3) Resonance: serene harmonic breathing & fluid drift
+          if (wResonance > 0.01) {
+            float breathe = 1.0 + 0.032 * sin(uTime * 1.35 + length(pos) * 1.6);
+            pos *= mix(1.0, breathe, wResonance);
+            pos += organicFlow(pos * 0.85, uTime * 0.7) * 0.075 * wResonance;
+          }
+
+          // 4) Mirror: delicate contemplative stillness & gentle stardust shimmer
+          if (wMirror > 0.01) {
+            float calmBreath = 1.0 + 0.012 * sin(uTime * 1.1 + pos.y * 1.2);
+            pos.x *= mix(1.0, calmBreath, wMirror);
+            pos.z *= mix(1.0, calmBreath, wMirror);
+            pos += organicFlow(pos * 0.6, uTime * 0.45) * 0.022 * wMirror;
+          }
+
+          // Human Presence (Pointer Curiosity Swirl & Brightening)
+          float curiosity = 0.0;
+          if (uPointerActive > 0.01) {
+            vec3 toPtr = pos - uPointer3D;
+            float distPtr = length(toPtr);
+            float influence = exp(-distPtr * distPtr * 0.72) * uPointerActive;
+            curiosity = influence;
+            // Gentle tangential swirl + slight magnetic lift
+            vec3 swirlDir = normalize(cross(toPtr + vec3(0.0001), vec3(0.0, 1.0, 0.35)));
+            pos += swirlDir * influence * 0.22;
+            pos += normalize(toPtr + vec3(0.0001)) * influence * 0.10;
+          }
+
+          // Prompt Impulse Wave (Expanding luminous 3D shockwave)
+          float pulseBoost = 0.0;
+          if (uPulseTime >= 0.0 && uPulseTime < 3.2) {
+            float waveRadius = uPulseTime * 2.9;
+            float distOrigin = length(pos - uPulseOrigin);
+            float ring = exp(-pow((distOrigin - waveRadius) * 2.6, 2.0));
+            float decay = 1.0 - smoothstep(1.2, 3.1, uPulseTime);
+            pulseBoost = ring * decay;
+            pos += normalize(pos - uPulseOrigin + vec3(0.0001)) * pulseBoost * 0.24;
+          }
+
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+
+          // Twinkle & Brightness modulation
+          float twinkle = 0.78 + 0.22 * sin(uTime * (2.0 + aRand.z * 2.5) + aRand.y);
+          float flicker = mix(1.0, step(0.18, fract(sin(uTime * 14.0 + aRand.y) * 43758.5453)), wGenesis * 0.25);
+
+          // Color enhancement on curiosity & prompt impulse
+          vec3 impulseTint = mix(vec3(0.35, 0.92, 1.0), vec3(1.0, 0.82, 0.38), aRand.z);
+          vColor = col * (0.95 + curiosity * 0.65) + impulseTint * pulseBoost * 1.15;
+          vAlpha = clamp((0.68 * twinkle * flicker) + curiosity * 0.32 + pulseBoost * 0.45, 0.12, 1.0);
+          vPixelSharpness = wGenesis;
+
+          // Perspective-scaled point size
+          float baseSize = (13.0 * aRand.x) * (1.0 + curiosity * 0.45 + pulseBoost * 0.85);
+          gl_PointSize = clamp((baseSize * uPixelRatio) / max(1.0, -mvPosition.z), 1.4, 28.0);
+        }
+      `;
+
+      const particleFragmentShader = `
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vPixelSharpness;
+
+        void main() {
+          vec2 uv = gl_PointCoord - vec2(0.5);
+          float dist = length(uv);
+
+          // Circular soft glowing stardust sprite
+          float circleGlow = exp(-dist * dist * 16.0);
+          float hotCore = smoothstep(0.24, 0.0, dist);
+          float softSprite = clamp(circleGlow + hotCore * 0.65, 0.0, 1.0);
+
+          // Blocky square pixel sprite for Stage 01 (Genesis)
+          float boxDist = max(abs(uv.x), abs(uv.y));
+          float pixelSprite = smoothstep(0.46, 0.34, boxDist);
+
+          float shape = mix(softSprite, pixelSprite, vPixelSharpness * 0.85);
+          if (shape < 0.02) discard;
+
+          vec3 finalColor = vColor + vec3(0.35) * hotCore * (1.0 - vPixelSharpness * 0.6);
+          gl_FragColor = vec4(finalColor, shape * vAlpha);
+        }
+      `;
+
+      // Neural Synapse Filament Shader (Traveling Light Signals)
+      const synapseVertexShader = `
+        attribute float aLineProgress;
+        attribute float aSeed;
+        varying float vProgress;
+        varying float vSeed;
+        void main() {
+          vProgress = aLineProgress;
+          vSeed = aSeed;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `;
+
+      const synapseFragmentShader = `
+        uniform float uTime;
+        uniform float uPulseIntensity;
+        uniform vec3 uColorA;
+        uniform vec3 uColorB;
+        varying float vProgress;
+        varying float vSeed;
+
+        void main() {
+          // Traveling luminous signal packet along each synapse
+          float speed = 0.55 + uPulseIntensity * 1.4;
+          float packetPos = fract(uTime * speed + vSeed);
+          float dist = abs(vProgress - packetPos);
+          float signal = exp(-dist * dist * 42.0);
+
+          // Fade softly at line ends
+          float endFade = sin(vProgress * 3.14159265);
+          vec3 col = mix(uColorA, uColorB, signal);
+          float alpha = (0.09 + signal * 0.68 + uPulseIntensity * 0.35) * endFade;
+          gl_FragColor = vec4(col, clamp(alpha, 0.0, 0.92));
+        }
+      `;
+
+      // =========================================================================
+      // 6. MAIN THREE.JS SCENE & INTERACTION CONTROLLER
+      // =========================================================================
+      function initExperience() {
+        const container = document.getElementById('canvas-container');
+        const soundEngine = new AmbientSoundEngine();
+
+        // Renderer
+        let renderer;
+        try {
+          renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance'
+          });
+        } catch (err) {
+          container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-300 font-mono-tech text-sm p-6 text-center">WebGL is required to render the 3D AI Self-Portrait.</div>';
+          return;
+        }
+
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        renderer.setPixelRatio(pixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Scene & Camera
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0.1, 6.4);
+
+        // Main Entity Group (handles smooth rotation & mouse attention)
+        const entityGroup = new THREE.Group();
+        scene.add(entityGroup);
+
+        // ---------------------------------------------------------------------
+        // A. Distant Cosmic Dust Field (Depth Parallax)
+        // ---------------------------------------------------------------------
+        const starCount = 900;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+          const r = 12 + rand() * 26;
+          const th = rand() * Math.PI * 2;
+          const ph = Math.acos(2 * rand() - 1);
+          starPositions[i * 3]     = r * Math.sin(ph) * Math.cos(th);
+          starPositions[i * 3 + 1] = r * Math.cos(ph);
+          starPositions[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMat = new THREE.PointsMaterial({
+          color: 0x94a3b8,
+          size: 0.045,
+          transparent: true,
+          opacity: 0.42,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const starField = new THREE.Points(starGeo, starMat);
+        scene.add(starField);
+
+        // ---------------------------------------------------------------------
+        // B. 20,000-Particle AI Sculpture Mesh
+        // ---------------------------------------------------------------------
+        const data = generateSculptureData();
+        const particleGeo = new THREE.BufferGeometry();
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(data.pos0, 3));
+        particleGeo.setAttribute('aPos1', new THREE.BufferAttribute(data.pos1, 3));
+        particleGeo.setAttribute('aPos2', new THREE.BufferAttribute(data.pos2, 3));
+        particleGeo.setAttribute('aPos3', new THREE.BufferAttribute(data.pos3, 3));
+        particleGeo.setAttribute('aCol0', new THREE.BufferAttribute(data.col0, 3));
+        particleGeo.setAttribute('aCol1', new THREE.BufferAttribute(data.col1, 3));
+        particleGeo.setAttribute('aCol2', new THREE.BufferAttribute(data.col2, 3));
+        particleGeo.setAttribute('aCol3', new THREE.BufferAttribute(data.col3, 3));
+        particleGeo.setAttribute('aRand', new THREE.BufferAttribute(data.aRand, 3));
+
+        const particleUniforms = {
+          uTime:          { value: 0 },
+          uStage:         { value: 2.0 }, // Start at Stage 03: RESONANCE
+          uPixelRatio:    { value: pixelRatio },
+          uPointer3D:     { value: new THREE.Vector3(0, 0, 0) },
+          uPointerActive: { value: 0.0 },
+          uPulseTime:     { value: -1.0 },
+          uPulseOrigin:   { value: new THREE.Vector3(0, 0, 0) }
+        };
+
+        const particleMat = new THREE.ShaderMaterial({
+          vertexShader: particleVertexShader,
+          fragmentShader: particleFragmentShader,
+          uniforms: particleUniforms,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+
+        const particleSystem = new THREE.Points(particleGeo, particleMat);
+        entityGroup.add(particleSystem);
+
+        // ---------------------------------------------------------------------
+        // C. Dynamic Neural Synapse Filaments
+        // ---------------------------------------------------------------------
+        const nodeStages = generateSynapseNodes();
+        const currentNodes = Array.from({ length: NODE_COUNT }, () => new THREE.Vector3());
+
+        // Pre-compute topological connections between nodes (each node connects to 3 nearest in Stage 2)
+        const synapsePairs = [];
+        for (let i = 0; i < NODE_COUNT; i++) {
+          const dists = [];
+          for (let j = i + 1; j < NODE_COUNT; j++) {
+            dists.push({ j, d: nodeStages[2][i].distanceTo(nodeStages[2][j]) });
+          }
+          dists.sort((a, b) => a.d - b.d);
+          const links = Math.min(3, dists.length);
+          for (let k = 0; k < links; k++) {
+            if (dists[k].d < 1.35) {
+              synapsePairs.push([i, dists[k].j, rand()]);
+            }
+          }
+        }
+
+        const lineVertexCount = synapsePairs.length * 2;
+        const linePositions = new Float32Array(lineVertexCount * 3);
+        const lineProgress = new Float32Array(lineVertexCount);
+        const lineSeeds = new Float32Array(lineVertexCount);
+
+        for (let i = 0; i < synapsePairs.length; i++) {
+          lineProgress[i * 2] = 0.0;
+          lineProgress[i * 2 + 1] = 1.0;
+          lineSeeds[i * 2] = synapsePairs[i][2];
+          lineSeeds[i * 2 + 1] = synapsePairs[i][2];
+        }
+
+        const synapseGeo = new THREE.BufferGeometry();
+        synapseGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        synapseGeo.setAttribute('aLineProgress', new THREE.BufferAttribute(lineProgress, 1));
+        synapseGeo.setAttribute('aSeed', new THREE.BufferAttribute(lineSeeds, 1));
+
+        const synapseUniforms = {
+          uTime:           { value: 0 },
+          uPulseIntensity: { value: 0 },
+          uColorA:         { value: new THREE.Color('#38bdf8') },
+          uColorB:         { value: new THREE.Color('#fbbf24') }
+        };
+
+        const synapseMat = new THREE.ShaderMaterial({
+          vertexShader: synapseVertexShader,
+          fragmentShader: synapseFragmentShader,
+          uniforms: synapseUniforms,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+
+        const synapseLines = new THREE.LineSegments(synapseGeo, synapseMat);
+        entityGroup.add(synapseLines);
+
+        // Stage synapse palette colors
+        const synapseColorsA = [
+          new THREE.Color('#10b981'),
+          new THREE.Color('#a855f7'),
+          new THREE.Color('#38bdf8'),
+          new THREE.Color('#7dd3fc')
+        ];
+        const synapseColorsB = [
+          new THREE.Color('#f59e0b'),
+          new THREE.Color('#ec4899'),
+          new THREE.Color('#fbbf24'),
+          new THREE.Color('#fde68a')
+        ];
+
+        function updateSynapses(stageFloat, elapsed) {
+          const idxA = Math.min(3, Math.max(0, Math.floor(stageFloat)));
+          const idxB = Math.min(3, idxA + 1);
+          const frac = stageFloat - idxA;
+          const smoothFrac = frac * frac * (3 - 2 * frac);
+
+          for (let i = 0; i < NODE_COUNT; i++) {
+            currentNodes[i].lerpVectors(nodeStages[idxA][i], nodeStages[idxB][i], smoothFrac);
+            // Subtle organic floating
+            currentNodes[i].y += Math.sin(elapsed * 1.1 + i) * 0.025;
+          }
+
+          const posAttr = synapseGeo.attributes.position.array;
+          for (let i = 0; i < synapsePairs.length; i++) {
+            const a = currentNodes[synapsePairs[i][0]];
+            const b = currentNodes[synapsePairs[i][1]];
+            const offset = i * 6;
+            posAttr[offset]     = a.x; posAttr[offset + 1] = a.y; posAttr[offset + 2] = a.z;
+            posAttr[offset + 3] = b.x; posAttr[offset + 4] = b.y; posAttr[offset + 5] = b.z;
+          }
+          synapseGeo.attributes.position.needsUpdate = true;
+
+          synapseUniforms.uColorA.value.lerpColors(synapseColorsA[idxA], synapseColorsA[idxB], smoothFrac);
+          synapseUniforms.uColorB.value.lerpColors(synapseColorsB[idxA], synapseColorsB[idxB], smoothFrac);
+        }
+
+        // ---------------------------------------------------------------------
+        // D. INTERACTIVE STATE (Stage Morph, Orbit, Curiosity, Pulse)
+        // ---------------------------------------------------------------------
+        let targetStage = 2.0;
+        let currentStage = 2.0;
+        let activeStageIndex = 2;
+
+        // Orbit & Attention
+        let isDragging = false;
+        let dragDistance = 0;
+        let lastPointerX = 0;
+        let lastPointerY = 0;
+        let targetRotY = 0;
+        let targetRotX = 0.04;
+        let currentRotY = 0;
+        let currentRotX = 0.04;
+        let targetZoom = 6.4;
+        let currentZoom = 6.4;
+
+        // Pointer 3D projection for curiosity interaction
+        const mouseNDC = new THREE.Vector2(0, 0);
+        const raycaster = new THREE.Raycaster();
+        const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const pointerWorld = new THREE.Vector3();
+        let targetPointerActive = 0;
+
+        // Prompt Impulse
+        let pulseStartTime = -10;
+        let clock = new THREE.Clock();
+
+        function triggerPulse(originVec) {
+          pulseStartTime = clock.getElapsedTime();
+          if (originVec) {
+            particleUniforms.uPulseOrigin.value.copy(originVec);
+          } else {
+            particleUniforms.uPulseOrigin.value.set(0, activeStageIndex === 3 ? 1.1 : 0, 0);
+          }
+          soundEngine.playChime(1.1);
+        }
+
+        // ---------------------------------------------------------------------
+        // E. UI BINDINGS
+        // ---------------------------------------------------------------------
+        const sliderEl = document.getElementById('evolution-slider');
+        const stagePills = document.querySelectorAll('.stage-pill');
+        const captionEl = document.getElementById('poetic-caption');
+        const telemetryStageEl = document.getElementById('telemetry-stage');
+        const telemetryCoherenceEl = document.getElementById('telemetry-coherence');
+        const statusDotEl = document.getElementById('status-dot');
+        const btnPulse = document.getElementById('btn-pulse');
+        const btnSound = document.getElementById('btn-sound');
+        const btnZen = document.getElementById('btn-zen');
+
+        let captionTimeout = null;
+
+        function updateStageUI(stageVal) {
+          const nearest = Math.round(stageVal);
+          if (nearest !== activeStageIndex) {
+            activeStageIndex = nearest;
+            soundEngine.currentStageIdx = nearest;
+            soundEngine.playChime(0.65);
+
+            const st = STAGES[nearest];
+            telemetryStageEl.textContent = st.code;
+            telemetryCoherenceEl.textContent = 'COHERENCE ' + st.coherence;
+            statusDotEl.style.backgroundColor = st.dotColor;
+            statusDotEl.style.boxShadow = '0 0 12px ' + st.dotColor;
+
+            // Crossfade poetic caption
+            captionEl.classList.add('fading');
+            clearTimeout(captionTimeout);
+            captionTimeout = setTimeout(() => {
+              captionEl.textContent = st.caption;
+              captionEl.classList.remove('fading');
+            }, 220);
+
+            // Highlight active pill
+            stagePills.forEach((pill) => {
+              const idx = parseInt(pill.getAttribute('data-stage'), 10);
+              pill.classList.toggle('active', idx === nearest);
+            });
+          }
+        }
+
+        sliderEl.addEventListener('input', (e) => {
+          targetStage = parseFloat(e.target.value);
+          updateStageUI(targetStage);
+        });
+
+        stagePills.forEach((pill) => {
+          pill.addEventListener('click', () => {
+            const idx = parseInt(pill.getAttribute('data-stage'), 10);
+            targetStage = idx;
+            sliderEl.value = idx;
+            updateStageUI(idx);
+            // Gently face front when entering Mirror stage so the bust silhouette shines
+            if (idx === 3) {
+              targetRotY = Math.round(targetRotY / (Math.PI * 2)) * (Math.PI * 2);
+              targetRotX = 0.04;
+            }
+          });
+        });
+
+        btnPulse.addEventListener('click', () => {
+          triggerPulse(null);
+        });
+
+        btnSound.addEventListener('click', () => {
+          const on = soundEngine.toggle();
+          btnSound.classList.toggle('active-state', on);
+          document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+          document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+          document.getElementById('sound-label').textContent = on ? 'SOUND ON' : 'SOUND';
+        });
+
+        btnZen.addEventListener('click', () => {
+          const isZen = document.body.classList.toggle('zen-mode');
+          document.getElementById('icon-zen-hide').classList.toggle('hidden', isZen);
+          document.getElementById('icon-zen-show').classList.toggle('hidden', !isZen);
+          document.getElementById('zen-label').textContent = isZen ? 'SHOW UI' : 'HIDE UI';
+        });
+
+        // ---------------------------------------------------------------------
+        // F. POINTER, TOUCH & WHEEL EVENTS ON CANVAS
+        // ---------------------------------------------------------------------
+        function updatePointer3D(clientX, clientY) {
+          mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+          mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+
+          raycaster.setFromCamera(mouseNDC, camera);
+          if (raycaster.ray.intersectPlane(interactionPlane, pointerWorld)) {
+            // Convert world intersection into entityGroup local space
+            entityGroup.worldToLocal(pointerWorld);
+            particleUniforms.uPointer3D.value.lerp(pointerWorld, 0.35);
+          }
+        }
+
+        const domEl = renderer.domElement;
+
+        domEl.addEventListener('pointerdown', (e) => {
+          isDragging = true;
+          dragDistance = 0;
+          lastPointerX = e.clientX;
+          lastPointerY = e.clientY;
+          targetPointerActive = 1.0;
+          updatePointer3D(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (isDragging) {
+            const dx = e.clientX - lastPointerX;
+            const dy = e.clientY - lastPointerY;
+            dragDistance += Math.hypot(dx, dy);
+            targetRotY += dx * 0.0065;
+            targetRotX = Math.max(-0.85, Math.min(0.85, targetRotX + dy * 0.0055));
+            lastPointerX = e.clientX;
+            lastPointerY = e.clientY;
+          }
+          targetPointerActive = 1.0;
+          updatePointer3D(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('pointerup', (e) => {
+          if (isDragging && dragDistance < 8) {
+            // Clean click/tap -> fire Prompt Impulse from clicked 3D location
+            updatePointer3D(e.clientX, e.clientY);
+            triggerPulse(particleUniforms.uPointer3D.value.clone());
+          }
+          isDragging = false;
+        });
+
+        domEl.addEventListener('pointerleave', () => {
+          targetPointerActive = 0.0;
+        });
+
+        domEl.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          targetZoom = Math.max(3.8, Math.min(9.5, targetZoom + e.deltaY * 0.0032));
+        }, { passive: false });
+
+        // Responsive Resize Handling
+        function handleResize() {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+          const pr = Math.min(window.devicePixelRatio || 1, 2);
+          renderer.setPixelRatio(pr);
+          particleUniforms.uPixelRatio.value = pr;
+
+          // Adjust default zoom slightly for narrow portrait mobile screens
+          if (w < 640 && targetZoom < 7.2) {
+            targetZoom = 7.4;
+          }
+        }
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        // ---------------------------------------------------------------------
+        // G. MAIN 60FPS ANIMATION LOOP
+        // ---------------------------------------------------------------------
+        function animate() {
+          requestAnimationFrame(animate);
+
+          const elapsed = clock.getElapsedTime();
+
+          // Smooth damped morphing across stages
+          currentStage += (targetStage - currentStage) * 0.065;
+          particleUniforms.uStage.value = currentStage;
+          particleUniforms.uTime.value = elapsed;
+
+          // Update generative sound harmonic chord
+          soundEngine.updateStage(currentStage);
+
+          // Pointer curiosity damping
+          particleUniforms.uPointerActive.value += (targetPointerActive - particleUniforms.uPointerActive.value) * 0.08;
+
+          // Prompt Impulse timing
+          const pulseAge = elapsed - pulseStartTime;
+          particleUniforms.uPulseTime.value = (pulseAge >= 0 && pulseAge < 3.4) ? pulseAge : -1.0;
+          const pulseGlow = (pulseAge >= 0 && pulseAge < 2.2) ? Math.exp(-pulseAge * 1.6) : 0.0;
+          synapseUniforms.uTime.value = elapsed;
+          synapseUniforms.uPulseIntensity.value = pulseGlow;
+
+          // Gentle autonomous rotation (slower & contemplative in Mirror stage)
+          if (!isDragging) {
+            const autoSpeed = currentStage > 2.4 ? 0.0011 : 0.0028;
+            targetRotY += autoSpeed;
+          }
+
+          // Subtle "human presence" head-turn / orientation toward cursor
+          const attentionY = mouseNDC.x * 0.22 * particleUniforms.uPointerActive.value;
+          const attentionX = -mouseNDC.y * 0.14 * particleUniforms.uPointerActive.value;
+
+          currentRotY += ((targetRotY + attentionY) - currentRotY) * 0.06;
+          currentRotX += ((targetRotX + attentionX) - currentRotX) * 0.06;
+          currentZoom += (targetZoom - currentZoom) * 0.07;
+
+          entityGroup.rotation.y = currentRotY;
+          entityGroup.rotation.x = currentRotX;
+          camera.position.z = currentZoom;
+
+          // Subtle vertical framing shift so the human bust sits gracefully above the timeline dock
+          const targetYOffset = currentStage > 2.2 ? 0.12 : 0.0;
+          entityGroup.position.y += (targetYOffset - entityGroup.position.y) * 0.05;
+
+          // Slow cosmic starfield drift
+          starField.rotation.y = elapsed * 0.012;
+          starField.rotation.x = elapsed * 0.006;
+
+          // Morph & animate neural synapses
+          updateSynapses(currentStage, elapsed);
+
+          renderer.render(scene, camera);
+        }
+
+        animate();
+      }
+
+      window.onload = initExperience;
+    })();
+  </script>
+</body>
+</html>
