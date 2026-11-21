@@ -38,16 +38,21 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); font-family: var(
 .wm:hover { color: var(--ink); }
 .stage { position: relative; min-height: 0; }
 iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
-.veil { position: absolute; inset: 0; display: grid; place-items: center; background: var(--wall); pointer-events: none; transition: opacity .6s ease; }
-.veil.gone { opacity: 0; }
-.veil span { font-family: var(--f-display); font-size: clamp(28px, 5vw, 56px); font-weight: 600; letter-spacing: -.03em; color: var(--ink); display: flex; align-items: center; gap: 14px; }
-.veil span i { width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--ink)); box-shadow: 0 0 22px var(--c, transparent); animation: pulse 1.4s ease-in-out infinite; }
+.veil { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, #111116, var(--wall) 70%); pointer-events: none;
+  transition: none; }
+.veil.gone { opacity: 0; visibility: hidden; transition: opacity .8s cubic-bezier(.22,1,.36,1), visibility 0s linear .8s; }
+.veil-in { display: grid; justify-items: center; gap: 18px; text-align: center; padding-inline: 24px; transition: transform .8s cubic-bezier(.22,1,.36,1); }
+.veil.gone .veil-in { transform: scale(.97); }
+.veil canvas { width: 104px; height: 104px; display: block; filter: drop-shadow(0 0 26px color-mix(in srgb, var(--c, #fff) 35%, transparent)); }
+.veil .v-name { font-family: var(--f-display); font-size: clamp(28px, 4.4vw, 48px); font-weight: 600; letter-spacing: -.03em; color: var(--ink); margin: 0; }
+.veil .v-sub { font-family: var(--f-quote); font-style: italic; font-size: 17px; color: var(--ink-2); margin: 0; }
+.veil .v-state { font-family: var(--f-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--c, var(--muted)); margin: 0; opacity: .85; }
 @keyframes pulse { 50% { opacity: .35; } }
 @media (max-width: 720px) {
   .who em, .wm, .btn .lbl { display: none; }
   .who { justify-content: flex-start; }
 }
-@media (prefers-reduced-motion: reduce) { .veil { transition: none; } .veil span i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .veil, .veil-in { transition: none; } }
 </style>
 </head>
 <body>
@@ -58,12 +63,12 @@ iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; dis
     <a class="btn icon" id="prev" href="#" aria-label="Previous portrait">‹</a>
     <a class="btn icon" id="next" href="#" aria-label="Next portrait">›</a>
     <a class="btn" id="full" href="#" target="_blank" rel="noopener" aria-label="Open this portrait as a full page in a new tab">↗ <span class="lbl">Full page</span></a>
-    <a class="wm" id="wm" href="#"></a>
+    <a class="wm" href="https://www.rajeshkumarg.com/" rel="author">curated by Rajesh Kumar · rajeshkumarg.com</a>
   </div>
 </header>
 <main class="stage">
   <iframe id="frame" title="Portrait" allow="fullscreen; autoplay"></iframe>
-  <div class="veil" id="veil"><span><i></i><b id="veil-name"></b></span></div>
+  <div class="veil" id="veil" role="status" aria-live="polite"><div class="veil-in"><canvas id="veil-orb" aria-hidden="true"></canvas><p class="v-state" id="veil-state"></p><p class="v-name" id="veil-name"></p><p class="v-sub" id="veil-sub"></p></div></div>
 </main>
 
 <script src="portraits.js"></script>
@@ -72,7 +77,9 @@ iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; dis
   const P = window.PORTRAITS, C = window.CURATOR;
   const $ = id => document.getElementById(id);
   const frame = $("frame"), veil = $("veil");
-  $("wm").href = C.site; $("wm").textContent = "curated by " + C.name + " · " + C.siteLabel;
+  const orbs = import("./orbs.js");
+  const STATE_LABEL = { breathing: "Thinking", weaving: "Weaving", composing: "Composing", connecting: "Connecting", searching: "Searching", shaping: "Shaping" };
+  let stopOrb = () => {}, orbToken = 0, shownAt = 0;
 
   function show() {
     const id = location.hash.slice(1);
@@ -81,16 +88,26 @@ iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; dis
     const p = P[i], prev = P[(i - 1 + P.length) % P.length], next = P[(i + 1) % P.length];
     document.title = p.model + " · " + p.title + " · The Mirror Test";
     document.documentElement.style.setProperty("--c", p.color);
-    $("name").textContent = p.model; $("title").textContent = p.title; $("veil-name").textContent = p.model;
+    $("name").textContent = p.model; $("title").textContent = p.title; $("veil-name").textContent = p.model; $("veil-sub").textContent = "Opening " + p.title + "…"; $("veil-state").textContent = (STATE_LABEL[p.orb] || "Thinking");
     $("prev").href = "#" + prev.id; $("prev").title = prev.model;
     $("next").href = "#" + next.id; $("next").title = next.model;
     $("full").href = p.id + "/";
     frame.title = p.model + "'s self-portrait, " + p.title;
     veil.classList.remove("gone");
+    shownAt = performance.now();
+    const token = ++orbToken;
+    stopOrb(); stopOrb = () => {};
+    orbs.then(m => m.mountOrb($("veil-orb"), { state: p.orb, color: p.color, display: 104 }))
+      .then(s => { if (token === orbToken) stopOrb = s; else s(); }).catch(() => {});
     frame.src = p.id + "/";
   }
   frame.addEventListener("load", () => {
-    veil.classList.add("gone");
+    const token = orbToken;
+    setTimeout(() => {
+      if (token !== orbToken) return;
+      veil.classList.add("gone");
+      setTimeout(() => { if (token === orbToken) { stopOrb(); stopOrb = () => {}; } }, 850);
+    }, Math.max(0, 900 - (performance.now() - shownAt)));
     try {
       // A link inside a portrait (e.g. "All portraits") navigated the frame away: follow it with the whole window.
       const path = frame.contentWindow.location.pathname, id = location.hash.slice(1);

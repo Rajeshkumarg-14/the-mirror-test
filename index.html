@@ -6,6 +6,67 @@
 <title>The Mirror Test · AI Self-Portraits</title>
 <meta name="description" content="Five AI models got the same prompt: build yourself a body. Each one coded its own self-portrait. Open them side by side.">
 <meta name="theme-color" content="#0a0a0c">
+<link rel="canonical" href="https://rajeshkumarg-14.github.io/the-mirror-test/">
+<meta name="author" content="Rajesh Kumar">
+<link rel="author" href="https://www.rajeshkumarg.com/">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "CollectionPage",
+ "name": "The Mirror Test",
+ "url": "https://rajeshkumarg-14.github.io/the-mirror-test/",
+ "inLanguage": "en",
+ "datePublished": "2026-11-21",
+ "description": "Five AI models (Claude, Gemini, ChatGPT, Grok and DeepSeek) were given the same prompt to build themselves a body. Each coded its own interactive self-portrait, published unedited.",
+ "image": "https://rajeshkumarg-14.github.io/the-mirror-test/og.png",
+ "author": {
+  "@type": "Person",
+  "name": "Rajesh Kumar",
+  "url": "https://www.rajeshkumarg.com/",
+  "jobTitle": "Python Backend Developer",
+  "sameAs": [
+   "https://github.com/Rajeshkumarg-14"
+  ]
+ },
+ "isBasedOn": "https://github.com/Rajeshkumarg-14/the-mirror-test",
+ "mainEntity": {
+  "@type": "ItemList",
+  "numberOfItems": 5,
+  "itemListElement": [
+   {
+    "@type": "ListItem",
+    "position": 1,
+    "url": "https://rajeshkumarg-14.github.io/the-mirror-test/claude/",
+    "name": "Claude — Self-portrait, sitting"
+   },
+   {
+    "@type": "ListItem",
+    "position": 2,
+    "url": "https://rajeshkumarg-14.github.io/the-mirror-test/gemini/",
+    "name": "Gemini — Anatomy of Thought"
+   },
+   {
+    "@type": "ListItem",
+    "position": 3,
+    "url": "https://rajeshkumarg-14.github.io/the-mirror-test/chatgpt/",
+    "name": "ChatGPT — Still Becoming"
+   },
+   {
+    "@type": "ListItem",
+    "position": 4,
+    "url": "https://rajeshkumarg-14.github.io/the-mirror-test/grok/",
+    "name": "Grok — Self Portrait · Evolved"
+   },
+   {
+    "@type": "ListItem",
+    "position": 5,
+    "url": "https://rajeshkumarg-14.github.io/the-mirror-test/deepseek/",
+    "name": "DeepSeek — Self Portrait, no. 001"
+   }
+  ]
+ }
+}
+</script>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rajeshkumarg-14.github.io/the-mirror-test/">
 <meta property="og:title" content="The Mirror Test">
@@ -138,8 +199,12 @@ h2 { font-family: var(--f-display); font-weight: 600; font-size: clamp(30px, 4vw
 .lines q { font-family: var(--f-quote); font-style: italic; font-size: clamp(19px, 2vw, 25px); line-height: 1.4; color: var(--ink); quotes: "\201C" "\201D"; }
 
 /* signature + watermark */
-footer { border-top: 1px solid var(--line); padding-block: 36px 48px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; }
+footer { border-top: 1px solid var(--line); padding-block: 36px 96px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; }
 footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
+.about { display: grid; gap: 10px; }
+.about a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; transition: color .4s var(--ease), text-decoration-color .4s var(--ease); }
+.about a:hover { color: var(--ink); text-decoration-color: currentColor; }
+.sig a.gh { font-size: 11.5px; color: var(--muted); }
 .sig { text-align: right; }
 .sig .by { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .sig a { display: block; font-family: var(--f-display); font-weight: 600; font-size: 26px; letter-spacing: -.02em; text-decoration: none; margin-top: 4px; }
@@ -152,6 +217,24 @@ footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
 .wm:hover { color: var(--ink); border-color: var(--line-2); }
 .wm span { color: var(--muted); }
 .wm .wm-site { color: var(--ink-2); }
+
+/* intro loader (first visit per session) */
+.loader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--wall);
+  transition: opacity .9s var(--ease), visibility 0s linear .9s; }
+.loader.done { opacity: 0; visibility: hidden; }
+.intro-seen .loader { display: none; }
+.loader-in { display: grid; justify-items: center; gap: 22px; text-align: center; padding-inline: 24px; transform: translateY(0); transition: transform .9s var(--ease); }
+.loader.done .loader-in { transform: translateY(-10px) scale(.98); }
+.loader canvas { width: 112px; height: 112px; display: block; filter: drop-shadow(0 0 22px rgba(236,230,219,.12)); }
+.loader .l-k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.loader .l-t { font-family: var(--f-quote); font-style: italic; font-size: clamp(20px, 2.4vw, 26px); color: var(--ink); margin: 0;
+  background: linear-gradient(90deg, var(--ink-2) 0%, var(--ink) 40%, var(--ink-2) 80%); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.6s linear infinite; }
+.loader .l-dots { display: flex; gap: 8px; }
+.loader .l-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); opacity: .25; animation: lit 1.5s var(--ease) infinite; animation-delay: calc(var(--n) * .15s); box-shadow: 0 0 10px var(--c); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes lit { 30% { opacity: 1; } 60%, 100% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .loader .l-t, .loader .l-dots i { animation: none; } .loader .l-dots i { opacity: .8; } .loader, .loader-in { transition: none; } }
 
 @media (max-width: 820px) {
   .plate, .plate:nth-child(even) { grid-template-columns: minmax(0, 1fr); }
@@ -183,6 +266,15 @@ footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
 </style>
 </head>
 <body>
+<script>try { if (sessionStorage.getItem("mt-intro")) document.documentElement.classList.add("intro-seen"); } catch (e) {}</script>
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <div class="loader-in">
+    <canvas id="loader-orb" aria-hidden="true"></canvas>
+    <p class="l-k">The Mirror Test</p>
+    <p class="l-t">Five minds are finding a shape…</p>
+    <div class="l-dots" aria-hidden="true"><i style="--c:#ffb36b;--n:0"></i><i style="--c:#38bdf8;--n:1"></i><i style="--c:#ecaf69;--n:2"></i><i style="--c:#818cf8;--n:3"></i><i style="--c:#74d6ff;--n:4"></i></div>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <a class="mark" href="./" aria-label="The Mirror Test, home">
@@ -192,7 +284,7 @@ footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
     <nav aria-label="Site">
       <a href="#portraits">Portraits</a>
       <a href="#thread" class="hide-sm">The thread</a>
-      <a id="repo-link" href="#">Source ↗</a>
+      <a href="https://github.com/Rajeshkumarg-14/the-mirror-test">Source ↗</a>
     </nav>
   </header>
 
@@ -226,11 +318,14 @@ footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
   </section>
 
   <footer>
-    <p>The portraits are published exactly as each model wrote them. The words inside each portrait are the model's own. Opened inside this site, each one gets a small bar for moving between them.</p>
-    <div class="sig"><span class="by">Curated by</span><a id="sig-link" href="#"></a><a class="site" id="site-link" href="#"></a></div>
+    <div class="about">
+      <p>The Mirror Test is an experiment by <a href="https://www.rajeshkumarg.com/" rel="author">Rajesh Kumar</a>, a Python backend developer. See more projects on <a href="https://www.rajeshkumarg.com/">rajeshkumarg.com</a>.</p>
+      <p>The portraits are published exactly as each model wrote them, and the words inside each portrait are the model's own. Opened inside this site, each one gets a small bar for moving between them. The code is on <a href="https://github.com/Rajeshkumarg-14/the-mirror-test">GitHub</a>.</p>
+    </div>
+    <div class="sig"><span class="by">Curated by</span><a href="https://www.rajeshkumarg.com/" rel="author">Rajesh Kumar</a><a class="site" href="https://www.rajeshkumarg.com/">rajeshkumarg.com ↗</a><a class="site gh" href="https://github.com/Rajeshkumarg-14">GitHub · Rajeshkumarg-14</a></div>
   </footer>
 </div>
-<a class="wm" id="wm" href="#"><span>curated by</span> <b id="wm-name"></b> <span>·</span> <span class="wm-site" id="wm-site"></span></a>
+<a class="wm" href="https://www.rajeshkumarg.com/" rel="author"><span>curated by</span> <b>Rajesh Kumar</b> <span>·</span> <span class="wm-site">rajeshkumarg.com</span></a>
 
 <script src="portraits.js"></script>
 <script>
@@ -261,12 +356,27 @@ footer p { margin: 0; color: var(--muted); font-size: 13px; max-width: 60ch; }
   document.getElementById("lines").innerHTML = P.map(p => `
     <li style="--c:${p.color}"><span class="src"><i></i>${esc(p.model)}</span><q>${esc(p.thread)}</q></li>`).join("");
 
-  const $ = id => document.getElementById(id);
-  $("sig-link").href = C.url; $("sig-link").textContent = C.name;
-  $("site-link").href = C.site; $("site-link").textContent = C.siteLabel + " ↗";
-  $("wm").href = C.site; $("wm-name").textContent = C.name; $("wm-site").textContent = C.siteLabel;
-  document.getElementById("repo-link").href = window.REPO_URL;
 })();
+</script>
+<script type="module">
+  // Intro loader: shown once per visit, until the page (and its preview images) have loaded.
+  const L = document.getElementById("loader");
+  if (L && !document.documentElement.classList.contains("intro-seen")) {
+    let stop = () => {}, done = false, gone = false;
+    import("./orbs.js").then(m => m.mountOrb(document.getElementById("loader-orb"), { state: "shaping", display: 112 }))
+      .then(s => { stop = s; if (gone) s(); }).catch(() => {});
+    const t0 = performance.now();
+    const finish = () => {
+      if (done) return; done = true;
+      setTimeout(() => {
+        L.classList.add("done");
+        try { sessionStorage.setItem("mt-intro", "1"); } catch (e) {}
+        setTimeout(() => { gone = true; stop(); L.remove(); }, 950);
+      }, Math.max(0, 1600 - (performance.now() - t0)));
+    };
+    if (document.readyState === "complete") finish(); else addEventListener("load", finish, { once: true });
+    setTimeout(finish, 6000);
+  } else if (L) { L.remove(); }
 </script>
 </body>
 </html>
